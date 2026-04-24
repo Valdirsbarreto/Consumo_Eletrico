@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="description"
+        content="Leitura e acompanhamento do consumo de energia elétrica em medidores eletromecânicos de ponteiros." />
+    <meta name="theme-color" content="#00d4ff" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Consumo kWh" />
+
+    <title>App Consumo Elétrico</title>
+    <link rel="manifest" href="manifest.json" />
+    <link rel="stylesheet" href="index.css" />
+
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" href="assets/icon.svg" />
+</head>
+
+<body>
+
+    <!-- ═══════════════════════════════════════════
+       HEADER
+  ════════════════════════════════════════════ -->
+    <header class="app-header">
+        <div class="header-inner">
+            <div class="header-icon">⚡</div>
+            <h1 class="header-title">Consumo <span>Elétrico</span></h1>
+        </div>
+    </header>
+
+    <!-- ═══════════════════════════════════════════
+       NAV TABS
+  ════════════════════════════════════════════ -->
+    <nav class="nav-tabs" id="navTabs">
+        <button class="nav-tab active" data-tab="leitura" id="tabLeitura">
+            <span class="tab-icon">🔢</span>Leitura
+        </button>
+        <button class="nav-tab" data-tab="historico" id="tabHistorico">
+            <span class="tab-icon">📋</span>Histórico
+        </button>
+        <button class="nav-tab" data-tab="grafico" id="tabGrafico">
+            <span class="tab-icon">📊</span>Gráfico
+        </button>
+        <button class="nav-tab" data-tab="calc" id="tabCalc">
+            <span class="tab-icon">🔌</span>Aparelhos
+        </button>
+    </nav>
+
+    <!-- ═══════════════════════════════════════════
+       MAIN
+  ════════════════════════════════════════════ -->
+    <main class="main">
+
+        <!-- ── Install Banner ── -->
+        <div class="install-banner hidden" id="installBanner">
+            <span class="install-icon">📲</span>
+            <div class="install-text">
+                <h4>Instalar no celular</h4>
+                <p>Adicione à tela inicial para uso offline</p>
+            </div>
+        </div>
+
+        <!-- ══================================================
+         SEÇÃO 1 — LEITURA ATUAL
+    ═══════════════════════════════════════════════════ -->
+        <section class="section active" id="secLeitura">
+
+            <!-- Banner: sem leitura anterior -->
+            <div class="prev-alert" id="prevAlert" style="display:none">
+                ⚠️ Sem leitura anterior no histórico. Para calcular o consumo do período, vá ao
+                <strong>Histórico</strong> e clique em <strong>"+ Inserir leitura anterior"</strong>.
+            </div>
+
+            <div class="card">
+                <div class="card-title">⚡ Informe os ponteiros do medidor</div>
+
+
+
+
+                <div class="dial-info">
+                    ℹ️ Digite o dígito de cada ponteiro, da <strong>esquerda para a direita</strong>
+                </div>
+
+                <div class="dials-grid">
+                    <!-- Milhar (anti-horário) -->
+                    <div class="dial-wrapper">
+                        <span class="dial-label">Milhar</span>
+                        <div class="dial-direction">↺ Anti-hor.</div>
+                        <input type="number" class="dial-input" id="d0" min="0" max="9" placeholder="–" maxlength="1"
+                            inputmode="numeric" aria-label="Dígito milhar" />
+                    </div>
+                    <!-- Centena (horário) -->
+                    <div class="dial-wrapper">
+                        <span class="dial-label">Centena</span>
+                        <div class="dial-direction">↻ Horário</div>
+                        <input type="number" class="dial-input" id="d1" min="0" max="9" placeholder="–" maxlength="1"
+                            inputmode="numeric" aria-label="Dígito centena" />
+                    </div>
+                    <!-- Dezena (anti-horário) -->
+                    <div class="dial-wrapper">
+                        <span class="dial-label">Dezena</span>
+                        <div class="dial-direction">↺ Anti-hor.</div>
+                        <input type="number" class="dial-input" id="d2" min="0" max="9" placeholder="–" maxlength="1"
+                            inputmode="numeric" aria-label="Dígito dezena" />
+                    </div>
+                    <!-- Unidade (horário) -->
+                    <div class="dial-wrapper">
+                        <span class="dial-label">Unidade</span>
+                        <div class="dial-direction">↻ Horário</div>
+                        <input type="number" class="dial-input" id="d3" min="0" max="9" placeholder="–" maxlength="1"
+                            inputmode="numeric" aria-label="Dígito unidade" />
+                    </div>
+                </div>
+
+                <!-- Preview -->
+                <div class="reading-preview">
+                    <div class="reading-raw" id="previewRaw">– – – –</div>
+                    <div class="reading-real">Consumo estimado: <strong id="previewKwh">– kWh</strong></div>
+                    <div class="reading-total" id="previewTotal"
+                        style="font-size:0.68rem;color:var(--text-muted);margin-top:2px"></div>
+                </div>
+
+                <div class="multiplier-badge">⚙️ MULTIPLICAR POR 10 (conforme indicado no medidor)</div>
+
+                <!-- ── Datas + Consumo Esperado ── -->
+                <div class="dates-row">
+                    <div class="date-field">
+                        <label class="date-label" for="dateReading">📅 Data desta leitura</label>
+                        <input type="date" id="dateReading" class="form-input date-input"
+                            aria-label="Data da leitura atual" />
+                    </div>
+                    <div class="date-field">
+                        <label class="date-label" for="dateNext">🗓️ Próxima marcação</label>
+                        <input type="date" id="dateNext" class="form-input date-input"
+                            aria-label="Data prevista da próxima leitura" />
+                    </div>
+                </div>
+                <div class="expected-row">
+                    <label class="date-label" for="expectedKwh">🎯 Consumo esperado (kWh)</label>
+                    <div class="expected-input-wrap">
+                        <input type="number" id="expectedKwh" class="form-input" min="0" step="1" placeholder="Ex: 250"
+                            inputmode="numeric" aria-label="Consumo esperado em kWh" />
+                        <span class="expected-unit">kWh</span>
+                    </div>
+                    <div class="expected-hint">Consumo previsto para este período. Será comparado com o consumo real no
+                        histórico.</div>
+                </div>
+
+                <button class="btn btn-primary" id="btnRegistrar">
+                    ✅ Registrar Leitura
+                </button>
+            </div>
+
+            <!-- ── Monitor do Período Atual ── -->
+            <div class="card monitor-card" id="monitorCard" style="display:none">
+                <div class="card-title">📊 Monitor do Período Atual</div>
+
+                <!-- Period header info -->
+                <div class="monitor-header" id="monitorHeader"></div>
+
+                <!-- Progress bar: days -->
+                <div class="monitor-section-label">Progresso do período</div>
+                <div class="monitor-progress-wrap">
+                    <div class="monitor-bar-track">
+                        <div class="monitor-bar-fill" id="monitorDaysFill"></div>
+                    </div>
+                    <div class="monitor-bar-labels">
+                        <span id="monitorDaysLabel">– dias</span>
+                        <span id="monitorDaysTotal">– dias</span>
+                    </div>
+                </div>
+
+                <!-- Consumption comparison -->
+                <div class="monitor-compare">
+                    <div class="monitor-stat">
+                        <div class="monitor-stat-val" id="monitorExpected">–</div>
+                        <div class="monitor-stat-label">kWh esperados<br>até hoje</div>
+                    </div>
+                    <div class="monitor-vs" id="monitorStatusIcon">VS</div>
+                    <div class="monitor-stat">
+                        <div class="monitor-stat-val" id="monitorActual">–</div>
+                        <div class="monitor-stat-label">kWh consumidos<br>até agora</div>
+                    </div>
+                </div>
+
+                <!-- Status badge -->
+                <div class="monitor-status-wrap">
+                    <div class="monitor-status-badge" id="monitorBadge"></div>
+                    <div class="monitor-projection" id="monitorProjection"></div>
+                </div>
+
+                <!-- Hint when no live reading -->
+                <div class="monitor-hint" id="monitorHint">
+                    Digite o marcador atual acima para ver o consumo real do período ↑
+                </div>
+            </div>
+
+            <!-- Último consumo rápido -->
+            <div class="card" id="lastConsumptionCard" style="display:none;">
+                <div class="card-title">📈 Último período registrado</div>
+                <div class="stats-row">
+                    <div class="stat-card">
+                        <div class="stat-value" id="lastConsumptionKwh">–</div>
+                        <div class="stat-label">kWh consumidos</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="lastDays">–</div>
+                        <div class="stat-label">dias do período</div>
+                    </div>
+                </div>
+            </div>
+
+        </section><!-- /secLeitura -->
+
+
+        <!-- ══================================================
+         SEÇÃO 2 — HISTÓRICO
+    ═══════════════════════════════════════════════════ -->
+        <section class="section" id="secHistorico">
+
+            <div class="card">
+                <div class="card-title" style="justify-content:space-between">
+                    📋 Histórico de Leituras
+                    <button class="btn-insert-prev" id="btnInsertPrev">+ Inserir leitura anterior</button>
+                </div>
+                <div class="history-list" id="historyList">
+                    <div class="empty-state">
+                        <span class="empty-icon">💭</span>
+                        <p>Nenhuma leitura registrada ainda.<br>Vá para “Leitura” e registre a primeira!</p>
+                    </div>
+                </div>
+            </div>
+
+        </section><!-- /secHistorico -->
+
+        <!-- ══================================================
+         SEÇÃO 3 — GRÁFICO
+    ═══════════════════════════════════════════════════ -->
+        <section class="section" id="secGrafico">
+
+            <div class="card">
+                <div class="card-title">📊 Consumo Mensal (kWh)</div>
+                <div class="chart-wrapper">
+                    <canvas id="chartConsumption"></canvas>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">📈 Estatísticas</div>
+                <div class="stats-row">
+                    <div class="stat-card">
+                        <div class="stat-value" id="statTotal">–</div>
+                        <div class="stat-label">Total leituras</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="statAvg">–</div>
+                        <div class="stat-label">Média kWh/período</div>
+                    </div>
+                </div>
+                <div class="stats-row">
+                    <div class="stat-card">
+                        <div class="stat-value" id="statMax">–</div>
+                        <div class="stat-label">Máximo kWh</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="statMin">–</div>
+                        <div class="stat-label">Mínimo kWh</div>
+                    </div>
+                </div>
+            </div>
+
+        </section><!-- /secGrafico -->
+
+        <!-- ══================================================
+         SEÇÃO 4 — CALCULADORA DE APARELHOS
+    ═══════════════════════════════════════════════════ -->
+        <section class="section" id="secCalc">
+
+            <div class="card">
+                <div class="card-title">💰 Tarifa de Energia</div>
+                <div class="tariff-row">
+                    <label for="tariffInput">R$ / kWh:</label>
+                    <div class="input-group">
+                        <input type="number" id="tariffInput" class="form-input" step="0.01" min="0" value="0.95"
+                            placeholder="0.95" inputmode="decimal" aria-label="Tarifa por kWh" />
+                        <span class="unit">R$</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">➕ Adicionar Aparelho</div>
+
+                <div class="appliance-add-form">
+                    <div>
+                        <div class="col-label">Aparelho</div>
+                        <input type="text" id="appName" class="form-input" placeholder="Ex: Geladeira"
+                            aria-label="Nome do aparelho" />
+                    </div>
+                    <div>
+                        <div class="col-label">Potência (W)</div>
+                        <input type="number" id="appPower" class="form-input" placeholder="150" min="1"
+                            inputmode="numeric" aria-label="Potência em watts" />
+                    </div>
+                    <div>
+                        <div class="col-label">Horas/dia</div>
+                        <input type="number" id="appHours" class="form-input" placeholder="24" min="0.1" max="24"
+                            step="0.5" inputmode="decimal" aria-label="Horas de uso por dia" />
+                    </div>
+                    <button class="btn-add" id="btnAddAppliance" aria-label="Adicionar">＋</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">🔌 Seus Aparelhos</div>
+                <div class="appliance-list" id="applianceList">
+                    <div class="empty-state">
+                        <span class="empty-icon">🔌</span>
+                        <p>Nenhum aparelho cadastrado ainda.</p>
+                    </div>
+                </div>
+
+                <div class="appliance-total" id="applianceTotal" style="display:none;">
+                    <div>
+                        <div class="label">Total estimado/mês</div>
+                        <div class="cost" id="totalCost"></div>
+                    </div>
+                    <div class="value" id="totalKwh"></div>
+                </div>
+            </div>
+
+        </section><!-- /secCalc -->
+
+    </main>
+
+    <!-- ═══════════════════════════════════════════
+         MODAL — Editar / Inserir Leitura
+    ════════════════════════════════════════════ -->
+    <div class="modal-overlay" id="modalOverlay" style="display:none" role="dialog" aria-modal="true"
+        aria-labelledby="modalTitle">
+        <div class="modal-box">
+            <div class="modal-header">
+                <span class="modal-title" id="modalTitle">✏️ Editar Leitura</span>
+                <button class="modal-close" id="modalClose" aria-label="Fechar">✕</button>
+            </div>
+
+            <input type="hidden" id="modalReadingId" />
+
+            <div class="modal-field">
+                <label class="date-label" for="modalDate">📅 Data da leitura</label>
+                <input type="date" id="modalDate" class="form-input date-input" />
+            </div>
+
+            <div class="modal-field">
+                <label class="date-label" for="modalRaw">🔢 Leitura do marcador (4 dígitos)</label>
+                <div class="expected-input-wrap">
+                    <input type="number" id="modalRaw" class="form-input" min="0" max="9999" placeholder="Ex: 4357"
+                        inputmode="numeric" />
+                    <span class="expected-unit">× 10</span>
+                </div>
+                <div class="expected-hint">Valor lido nos 4 ponteiros. O consumo real = este valor × 10 kWh.</div>
+            </div>
+
+            <div class="modal-field">
+                <label class="date-label" for="modalDateNext">🗓️ Próxima marcação prevista</label>
+                <input type="date" id="modalDateNext" class="form-input date-input" />
+            </div>
+
+            <div class="modal-field">
+                <label class="date-label" for="modalExpected">🎯 Consumo esperado (kWh)</label>
+                <div class="expected-input-wrap">
+                    <input type="number" id="modalExpected" class="form-input" min="0" step="1" placeholder="Opcional"
+                        inputmode="numeric" />
+                    <span class="expected-unit">kWh</span>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn btn-secondary" id="modalCancel" style="width:auto;flex:1">Cancelar</button>
+                <button class="btn btn-primary" id="modalSave" style="flex:2">💾 Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Gemini Vision API used instead of Tesseract — no CDN needed -->
+    <script src="app.js"></script>
+</body>
+
+</html>

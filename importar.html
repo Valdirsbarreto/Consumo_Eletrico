@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Importando histórico…</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700&display=swap');
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: #070b16;
+            color: #e8f0fe;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 1.5rem;
+            padding: 2rem;
+        }
+
+        .icon {
+            font-size: 3rem;
+        }
+
+        h1 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #00d4ff;
+        }
+
+        p {
+            font-size: 0.85rem;
+            color: #7a8ba0;
+            text-align: center;
+            max-width: 320px;
+        }
+
+        .progress-bar {
+            width: 280px;
+            height: 6px;
+            background: rgba(0, 212, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00d4ff, #0080cc);
+            border-radius: 3px;
+            width: 0;
+            transition: width 0.4s ease;
+        }
+
+        .table {
+            width: 100%;
+            max-width: 420px;
+            border-collapse: collapse;
+            font-size: 0.78rem;
+        }
+
+        .table th {
+            color: #7a8ba0;
+            text-transform: uppercase;
+            font-size: 0.65rem;
+            letter-spacing: 0.5px;
+            padding: 6px 8px;
+            text-align: left;
+            border-bottom: 1px solid rgba(0, 212, 255, 0.1);
+        }
+
+        .table td {
+            padding: 6px 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            color: #e8f0fe;
+        }
+
+        .table td:last-child {
+            color: #00e676;
+            font-weight: 600;
+            text-align: right;
+        }
+
+        .btn {
+            margin-top: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: linear-gradient(135deg, #00d4ff, #0080cc);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        .success {
+            color: #00e676;
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        .warn {
+            color: #f5a623;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="icon" id="icon">⚡</div>
+    <h1 id="title">Importando histórico…</h1>
+    <p id="desc">Carregando 13 leituras registradas de Jan/2025 a Jan/2026</p>
+
+    <div class="progress-bar">
+        <div class="progress-fill" id="progress"></div>
+    </div>
+
+    <table class="table" id="preview">
+        <thead>
+            <tr>
+                <th>Data</th>
+                <th>Marcador</th>
+                <th>kWh real</th>
+                <th>Consumo</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+    </table>
+
+    <p class="warn" id="warnMsg"></p>
+    <button class="btn" id="btnGo" style="display:none">🚀 Abrir o App</button>
+
+    <script>
+        // ─── DADOS HISTÓRICOS ───────────────────────────────────────
+        // consumo = diferença em unidades de disco (do marcador)
+        // consumo × 10 = kWh reais consumidos no período
+        const HISTORICO = [
+            { timestamp: "2025-01-05", raw: 3243, dateNext: "2025-02-04", consumo: 49 },
+            { timestamp: "2025-02-04", raw: 3292, dateNext: "2025-03-06", consumo: 49 },
+            { timestamp: "2025-03-06", raw: 3333, dateNext: "2025-04-03", consumo: 41 },
+            { timestamp: "2025-04-03", raw: 3375, dateNext: "2025-05-05", consumo: 42 },
+            { timestamp: "2025-05-05", raw: 3418, dateNext: "2025-06-04", consumo: 43 },
+            { timestamp: "2025-06-04", raw: 3461, dateNext: "2025-07-07", consumo: 43 },
+            { timestamp: "2025-07-07", raw: 3500, dateNext: "2025-08-06", consumo: 39 },
+            { timestamp: "2025-08-06", raw: 3534, dateNext: "2025-09-05", consumo: 34 },
+            { timestamp: "2025-09-05", raw: 3574, dateNext: "2025-10-06", consumo: 40 },
+            { timestamp: "2025-10-06", raw: 3616, dateNext: "2025-11-06", consumo: 42 },
+            { timestamp: "2025-11-06", raw: 3658, dateNext: "2025-12-08", consumo: 42 },
+            { timestamp: "2025-12-08", raw: 3700, dateNext: "2026-01-06", consumo: 42 },
+            { timestamp: "2026-01-06", raw: 3742, dateNext: "2026-02-03", consumo: 42 },
+        ];
+
+        const MULT = 10;
+
+        function fmtDate(s) {
+            const d = new Date(s + 'T12:00:00');
+            return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        }
+
+        async function run() {
+            const progress = document.getElementById('progress');
+            const tbody = document.getElementById('tableBody');
+
+            // Check if there's already data
+            const existing = localStorage.getItem('consumo_readings');
+            if (existing) {
+                try {
+                    const arr = JSON.parse(existing);
+                    if (arr && arr.length > 0) {
+                        document.getElementById('warnMsg').textContent =
+                            `⚠️ Já existem ${arr.length} leitura(s) salvas. A importação vai SUBSTITUIR todos os dados.`;
+                    }
+                } catch { }
+            }
+
+            // Build entries with id
+            // expected = consumo × 10 kWh (consumo é a diferença bruta do disco)
+            const entries = HISTORICO.map((item, i) => ({
+                id: 1000000 + i,
+                timestamp: item.timestamp,
+                raw: item.raw,
+                kwh: item.raw * MULT,
+                dateNext: item.dateNext,
+                expected: item.consumo * MULT   // ex: 49 × 10 = 490 kWh
+            }));
+
+            // Animate progress + fill table
+            for (let i = 0; i < entries.length; i++) {
+                const e = entries[i];
+                const prev = entries[i - 1];
+                const diff = prev ? (e.raw - prev.raw) * MULT : null;
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+      <td>${fmtDate(e.timestamp)}</td>
+      <td style="font-weight:700;letter-spacing:1px">${e.raw}</td>
+      <td style="color:#7a8ba0">${e.kwh.toLocaleString('pt-BR')}</td>
+      <td>${diff !== null ? diff.toLocaleString('pt-BR') + ' kWh' : '—'}</td>
+    `;
+                tbody.appendChild(tr);
+                progress.style.width = ((i + 1) / entries.length * 100) + '%';
+                await new Promise(r => setTimeout(r, 60));
+            }
+
+            // Save to localStorage
+            localStorage.setItem('consumo_readings', JSON.stringify(entries));
+
+            // Update UI
+            document.getElementById('icon').textContent = '✅';
+            document.getElementById('title').textContent = '13 leituras importadas!';
+            document.getElementById('desc').textContent =
+                'Histórico de Jan/2025 a Jan/2026 salvo com sucesso.';
+
+            const btn = document.getElementById('btnGo');
+            btn.style.display = '';
+            btn.addEventListener('click', () => {
+                window.location.href = 'index.html';
+            });
+
+            // Auto-redirect after 2.5s
+            setTimeout(() => { window.location.href = 'index.html'; }, 2500);
+        }
+
+        run();
+    </script>
+
+</body>
+
+</html>

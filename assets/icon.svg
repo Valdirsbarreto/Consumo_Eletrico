@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#0f1a30"/>
+      <stop offset="100%" stop-color="#070b16"/>
+    </radialGradient>
+    <radialGradient id="glow" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#00d4ff" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#00d4ff" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="blur">
+      <feGaussianBlur stdDeviation="10"/>
+    </filter>
+  </defs>
+
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="256" fill="url(#bg)"/>
+  <!-- Glow overlay -->
+  <circle cx="256" cy="256" r="256" fill="url(#glow)"/>
+
+  <!-- Meter circle outline -->
+  <circle cx="256" cy="256" r="185" fill="none" stroke="#00d4ff" stroke-width="3" stroke-opacity="0.25"/>
+  <circle cx="256" cy="256" r="165" fill="none" stroke="#00d4ff" stroke-width="1" stroke-opacity="0.1"/>
+
+  <!-- Tick marks around dial -->
+  <g stroke="#00d4ff" stroke-width="2" stroke-opacity="0.35">
+    <line x1="256" y1="88" x2="256" y2="102" transform="rotate(0 256 256)"/>
+    <line x1="256" y1="88" x2="256" y2="102" transform="rotate(36 256 256)"/>
+    <line x1="256" y1="88" x2="256" y2="102" transform="rotate(72 256 256)"/>
+    <line x1="256" y1="88" x2="256" y2="102" transform="rotate(108 256 256)"/>
+    <line x1="256" y1="88" x2="256" y2="102" transform="rotate(144 256 256)"/>
+    <line x1="256" y1="88" x2="256" y2="102" transform="rotate(180 256 256)"/>
+    <line x1="256" y1="88" x2="256" y2="102" transform="rotate(216 256 256)"/>
+    <line x1="256" y1="88" x2="256" y2="102" transform="rotate(252 256 256)"/>
+    <line x1="256" y1="88" x2="256" y2="102" transform="rotate(288 256 256)"/>
+    <line x1="256" y1="88" x2="256" y2="102" transform="rotate(324 256 256)"/>
+  </g>
+
+  <!-- Pointer needle (amber/golden) -->
+  <g transform="rotate(-30 256 256)">
+    <polygon points="256,110 262,250 256,265 250,250" fill="#f5a623" opacity="0.95"/>
+    <circle cx="256" cy="256" r="16" fill="#f5a623" opacity="0.85"/>
+    <circle cx="256" cy="256" r="8"  fill="#070b16"/>
+  </g>
+
+  <!-- Lightning bolt (center, electric blue + white) -->
+  <g transform="translate(256,256) scale(0.45)">
+    <polygon points="20,-80 -10,10 15,10 -20,80 10,-10 -15,-10"
+             fill="white" opacity="0.95"/>
+    <polygon points="20,-80 -10,10 15,10 -20,80 10,-10 -15,-10"
+             fill="#00d4ff" opacity="0.7"/>
+  </g>
+
+  <!-- Glow dot under needle -->
+  <circle cx="256" cy="256" r="30" fill="#00d4ff" opacity="0.08" filter="url(#blur)"/>
+
+  <!-- Border ring -->
+  <circle cx="256" cy="256" r="250" fill="none" stroke="#00d4ff" stroke-width="4" stroke-opacity="0.3"/>
+</svg>
