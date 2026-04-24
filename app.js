@@ -325,7 +325,11 @@ Retorne EXCLUSIVAMENTE um objeto JSON válido, sem comentários ou blocos de có
                     })
                 });
 
-                if (!res.ok) throw new Error('Erro na API Gemini');
+                if (!res.ok) {
+                    const errText = await res.text();
+                    console.error("Erro da API Gemini:", errText);
+                    throw new Error(`[${res.status}] Detalhe: ${errText}`);
+                }
                 const data = await res.json();
                 const aiText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
                 
