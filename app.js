@@ -255,11 +255,16 @@ function initCameraLeitura() {
             const file = e.target.files[0];
             if (!file) return;
 
-            const GEMINI_KEY = window.APP_CONFIG?.GEMINI_KEY || localStorage.getItem('GEMINI_KEY');
+            let GEMINI_KEY = (typeof APP_CONFIG !== 'undefined' ? APP_CONFIG.GEMINI_KEY : null) || localStorage.getItem('GEMINI_KEY');
             if (!GEMINI_KEY) {
-                showToast('⚠️ Chave API do Gemini não configurada.', true);
-                fileInput.value = '';
-                return;
+                GEMINI_KEY = prompt("API Key do Gemini não encontrada.\\n\\nComo você está rodando na Vercel (onde o config.js fica oculto por segurança), cole sua chave da API do Gemini abaixo para salvá-la no seu navegador:");
+                if (GEMINI_KEY) {
+                    localStorage.setItem('GEMINI_KEY', GEMINI_KEY);
+                } else {
+                    showToast('⚠️ Chave API do Gemini não configurada.', true);
+                    fileInput.value = '';
+                    return;
+                }
             }
 
             const photoPreviewImg = document.getElementById('photoPreviewImg');
@@ -407,11 +412,16 @@ function initImportFile() {
             const file = e.target.files[0];
             if (!file) return;
 
-            const GEMINI_KEY = window.APP_CONFIG?.GEMINI_KEY || localStorage.getItem('GEMINI_KEY');
+            let GEMINI_KEY = (typeof APP_CONFIG !== 'undefined' ? APP_CONFIG.GEMINI_KEY : null) || localStorage.getItem('GEMINI_KEY');
             if (!GEMINI_KEY) {
-                showToast('⚠️ Chave API do Gemini não configurada.', true);
-                fileInput.value = '';
-                return;
+                GEMINI_KEY = prompt("API Key do Gemini não encontrada.\\n\\nComo você está rodando na Vercel (onde o config.js fica oculto por segurança), cole sua chave da API do Gemini abaixo para salvá-la no seu navegador:");
+                if (GEMINI_KEY) {
+                    localStorage.setItem('GEMINI_KEY', GEMINI_KEY);
+                } else {
+                    showToast('⚠️ Chave API do Gemini não configurada.', true);
+                    fileInput.value = '';
+                    return;
+                }
             }
 
             showToast('🤖 Analisando documento com IA...');
