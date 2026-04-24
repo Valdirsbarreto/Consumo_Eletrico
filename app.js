@@ -249,6 +249,7 @@ function initDateDefaults() {
     let defaultReadingDate = new Date();
     let defaultNextDate = new Date();
     defaultNextDate.setDate(defaultNextDate.getDate() + 30);
+    let defaultExpected = '';
 
     if (readings.length > 0) {
         const last = readings[readings.length - 1];
@@ -258,13 +259,19 @@ function initDateDefaults() {
             defaultNextDate = new Date(last.dateNext + 'T12:00:00');
             defaultNextDate.setDate(defaultNextDate.getDate() + 30);
         }
+        if (last.expected) {
+            defaultExpected = last.expected;
+        }
     }
 
     const ri = document.getElementById('dateReading');
     const ni = document.getElementById('dateNext');
+    const exp = document.getElementById('expectedKwh');
+    
     // Só substitui se estiver vazio
     if (!ri.value) ri.value = toInput(defaultReadingDate);
     if (!ni.value) ni.value = toInput(defaultNextDate);
+    if (!exp.value) exp.value = defaultExpected;
 }
 
 // ─────────────────────────────────────────────────────────────
