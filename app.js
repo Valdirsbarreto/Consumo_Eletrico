@@ -42,7 +42,10 @@ function fmtDate(str) {
 }
 
 function toInput(date) {
-    return new Date(date).toISOString().split('T')[0];
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
 }
 
 function daysBetween(a, b) {
@@ -242,12 +245,26 @@ Responda APENAS com exatamente 4 dígitos numéricos representando a leitura. Na
 //  DATE DEFAULTS
 // ─────────────────────────────────────────────────────────────
 function initDateDefaults() {
-    const today = new Date();
-    const next = new Date(); next.setDate(next.getDate() + 30);
+    const readings = db.get(SK_READINGS) || [];
+    let defaultReadingDate = new Date();
+    let defaultNextDate = new Date();
+    defaultNextDate.setDate(defaultNextDate.getDate() + 30);
+
+    if (readings.length > 0) {
+        const last = readings[readings.length - 1];
+        if (last.dateNext) {
+            // Se tivermos a data prevista da última leitura, usamos ela como a data de hoje
+            defaultReadingDate = new Date(last.dateNext + 'T12:00:00');
+            defaultNextDate = new Date(last.dateNext + 'T12:00:00');
+            defaultNextDate.setDate(defaultNextDate.getDate() + 30);
+        }
+    }
+
     const ri = document.getElementById('dateReading');
     const ni = document.getElementById('dateNext');
-    if (!ri.value) ri.value = toInput(today);
-    if (!ni.value) ni.value = toInput(next);
+    // Só substitui se estiver vazio
+    if (!ri.value) ri.value = toInput(defaultReadingDate);
+    if (!ni.value) ni.value = toInput(defaultNextDate);
 }
 
 // ─────────────────────────────────────────────────────────────
