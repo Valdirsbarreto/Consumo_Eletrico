@@ -543,9 +543,21 @@ function renderMonitor(liveRaw) {
     const pct = Math.min(100, Math.round((daysPassed / periodTotal) * 100));
 
     // ── Consumption math ──
-    const expTotal = last.expected;                          // ex: 300 kWh
-    const dailyRate = expTotal / periodTotal;                  // ex: 10 kWh/day
-    const expByToday = Math.round(dailyRate * daysPassed);      // ex: 200 kWh
+    let prevDailyRate = 0;
+    let prevKwh = 0;
+    let prevDays = 30;
+    if (readings.length >= 2) {
+        const prev = readings[readings.length - 2];
+        prevDays = Math.max(1, d(parse(prev.timestamp), periodStart));
+        prevKwh = (last.raw - prev.raw) * MULT;
+        prevDailyRate = prevKwh / prevDays;
+    } else {
+        prevDailyRate = last.expected ? (last.expected / periodTotal) : 0;
+    }
+
+    const expTotal = Math.round(prevDailyRate * periodTotal);  // Adjusted expected total for this period
+    const dailyRate = prevDailyRate;                           // Expected daily rate = previous daily rate
+    const expByToday = Math.round(dailyRate * daysPassed);     // Expected consumed until today
 
     const hasLive = liveRaw !== null && !isNaN(liveRaw) && liveRaw >= last.raw;
     const actualKwh = hasLive ? (liveRaw - last.raw) * MULT : null; // ex: 220 kWh
