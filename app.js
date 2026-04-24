@@ -318,23 +318,21 @@ function updatePreview() {
     const totalEl = document.getElementById('previewTotal');
 
     if (vals.some(v => v === null)) {
-        rawEl.textContent = vals.map(v => v === null ? '–' : v).join(' ');
         kwhEl.textContent = '– kWh';
-        if (totalEl) totalEl.textContent = '';
+        if (totalEl) totalEl.innerHTML = '';
         return;
     }
 
     const raw = vals[0] * 1000 + vals[1] * 100 + vals[2] * 10 + vals[3];
     rawEl.textContent = String(raw).padStart(4, '0');
 
-    // Try to calculate consumption vs last saved reading
     const readings = db.get(SK_READINGS) || [];
     if (readings.length > 0) {
         const last = readings[readings.length - 1];
         const lastRaw = last.raw;
         const diff = raw - lastRaw;
 
-        // Calculate expected future reading
+        // Calculate expected future reading & daily rate
         let prevDailyRate = 0;
         if (readings.length >= 2) {
             const prev = readings[readings.length - 2];
@@ -345,24 +343,53 @@ function updatePreview() {
         }
         
         const periodStart = new Date(last.timestamp + 'T12:00:00');
+        
+        // Pega as datas dos campos, se não tiver usa o default
+        const dateInput = document.getElementById('dateReading').value;
+        const todayVal = dateInput ? new Date(dateInput + 'T12:00:00') : new Date();
+        
         const nextVal = document.getElementById('dateNext').value;
         const periodEnd = new Date((nextVal ? nextVal : last.dateNext) + 'T12:00:00');
+        
         const periodTotal = Math.max(1, Math.round((periodEnd - periodStart) / 86400000));
+        const daysPassed = Math.max(0, Math.round((todayVal - periodStart) / 86400000));
         
         const expectedTotalKwh = prevDailyRate * periodTotal;
+        const expByToday = prevDailyRate * daysPassed;
+        
         const expectedRawDiff = Math.round(expectedTotalKwh / MULT);
         const expectedFutureRaw = lastRaw + expectedRawDiff;
 
         if (diff >= 0) {
             const consumoKwh = diff * MULT;
-            kwhEl.textContent = consumoKwh.toLocaleString('pt-BR') + ' kWh';
+            
+            // Lógica de alerta visual
+            let color = 'var(--accent-green)';
+            let icon = '🟢';
+            if (consumoKwh > expByToday * 1.1) {
+                color = 'var(--accent-red)';
+                icon = '🔴 Alto:';
+            } else if (consumoKwh > expByToday * 1.0) {
+                color = 'var(--accent-amber)';
+                icon = '⚠️ Atenção:';
+            } else {
+                icon = '🟢 OK:';
+            }
+            
+            kwhEl.innerHTML = `<span style="color:${color}">${icon} ${consumoKwh.toLocaleString('pt-BR')} kWh</span>`;
             if (totalEl) totalEl.innerHTML =
-                `Anterior: <strong>${String(lastRaw).padStart(4, '0')}</strong> &nbsp;&nbsp;|&nbsp;&nbsp; Previsto: <strong>${String(expectedFutureRaw).padStart(4, '0')}</strong>`;
+                `<div style="font-size:1.1rem; color:var(--text-primary); margin-top:8px; display:flex; justify-content:space-around; background:rgba(0,0,0,0.3); padding:8px; border-radius:8px;">
+                    <div>Anterior: <strong style="color:var(--text-muted)">${String(lastRaw).padStart(4, '0')}</strong></div>
+                    <div>Meta (Final): <strong style="color:var(--accent-blue)">${String(expectedFutureRaw).padStart(4, '0')}</strong></div>
+                </div>`;
         } else {
             // Warning: current < previous
-            kwhEl.textContent = '⚠️ Menor que leitura anterior';
+            kwhEl.innerHTML = '<span style="color:var(--accent-red)">⚠️ Menor que leitura anterior</span>';
             if (totalEl) totalEl.innerHTML =
-                `Anterior: <strong>${String(lastRaw).padStart(4, '0')}</strong> &nbsp;&nbsp;|&nbsp;&nbsp; Previsto: <strong>${String(expectedFutureRaw).padStart(4, '0')}</strong>`;
+                `<div style="font-size:1.1rem; color:var(--text-primary); margin-top:8px; display:flex; justify-content:space-around; background:rgba(0,0,0,0.3); padding:8px; border-radius:8px;">
+                    <div>Anterior: <strong style="color:var(--text-muted)">${String(lastRaw).padStart(4, '0')}</strong></div>
+                    <div>Meta (Final): <strong style="color:var(--accent-blue)">${String(expectedFutureRaw).padStart(4, '0')}</strong></div>
+                </div>`;
         }
     } else {
         // No previous reading — show total with note
