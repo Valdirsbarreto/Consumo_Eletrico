@@ -81,72 +81,7 @@ function initTabs() {
 
 
 
-// (crop/OCR code cleaned up)
-
-
-function getPos(e) {
-    const rect = overlay.getBoundingClientRect();
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    return {
-        x: Math.max(0, Math.min(clientX - rect.left, rect.width)),
-        y: Math.max(0, Math.min(clientY - rect.top, rect.height))
-    };
-}
-
-function onStart(e) {
-    e.preventDefault();
-    const pos = getPos(e);
-    startX = pos.x; startY = pos.y;
-    dragging = true;
-    box.style.display = 'block';
-    box.style.left = startX + 'px';
-    box.style.top = startY + 'px';
-    box.style.width = '0'; box.style.height = '0';
-}
-function onMove(e) {
-    if (!dragging) return;
-    e.preventDefault();
-    const pos = getPos(e);
-    const x = Math.min(startX, pos.x);
-    const y = Math.min(startY, pos.y);
-    const w = Math.abs(pos.x - startX);
-    const h = Math.abs(pos.y - startY);
-    box.style.left = x + 'px';
-    box.style.top = y + 'px';
-    box.style.width = w + 'px';
-    box.style.height = h + 'px';
-}
-function onEnd(e) {
-    if (!dragging) return;
-    dragging = false;
-    const rect = overlay.getBoundingClientRect();
-    const bx = parseInt(box.style.left);
-    const by = parseInt(box.style.top);
-    const bw = parseInt(box.style.width);
-    const bh = parseInt(box.style.height);
-    if (bw < 20 || bh < 10) {
-        // Too small — ignore
-        box.style.display = 'none';
-        cropRect = null;
-        return;
-    }
-    // Store as ratios (0-1) relative to container
-    cropRect = {
-        x: bx / rect.width,
-        y: by / rect.height,
-        w: bw / rect.width,
-        h: bh / rect.height
-    };
-}
-
-overlay.addEventListener('mousedown', onStart);
-overlay.addEventListener('mousemove', onMove);
-overlay.addEventListener('mouseup', onEnd);
-overlay.addEventListener('touchstart', onStart, { passive: false });
-overlay.addEventListener('touchmove', onMove, { passive: false });
-overlay.addEventListener('touchend', onEnd);
-}
+// Funções de crop removidas
 
 async function analyzeWithOCR() {
     const imgEl = document.getElementById('photoPreview');
