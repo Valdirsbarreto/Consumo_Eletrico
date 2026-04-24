@@ -1,4 +1,5 @@
 # Configuração local (contém chaves de API)
+config.js
 
 # Sistema operacional
 .DS_Store
