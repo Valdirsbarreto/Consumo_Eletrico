@@ -138,22 +138,22 @@
                             aria-label="Data prevista da próxima leitura" />
                     </div>
                 </div>
-                <div class="expected-row">
-                    <label class="date-label" for="expectedKwh">🎯 Consumo esperado (kWh)</label>
-                    <div class="expected-input-wrap">
-                        <input type="number" id="expectedKwh" class="form-input" min="0" step="1" placeholder="Ex: 250"
-                            inputmode="numeric" aria-label="Consumo esperado em kWh" />
-                        <span class="expected-unit">kWh</span>
-                    </div>
-                    <div class="expected-hint">Consumo previsto para este período. Será comparado com o consumo real no
-                        histórico.</div>
-                </div>
+                <!-- Campo de consumo esperado removido da UI (calculado nos bastidores) -->
+                <input type="hidden" id="expectedKwh" />
 
                 <button class="btn btn-primary" id="btnRegistrar">
                     ✅ Registrar Leitura
                 </button>
             </div>
 
+        </section><!-- /secLeitura -->
+
+
+        <!-- ══================================================
+         SEÇÃO 2 — HISTÓRICO
+    ═══════════════════════════════════════════════════ -->
+        <section class="section" id="secHistorico">
+            
             <!-- ── Monitor do Período Atual ── -->
             <div class="card monitor-card" id="monitorCard" style="display:none">
                 <div class="card-title">📊 Monitor do Período Atual</div>
@@ -212,14 +212,6 @@
                     </div>
                 </div>
             </div>
-
-        </section><!-- /secLeitura -->
-
-
-        <!-- ══================================================
-         SEÇÃO 2 — HISTÓRICO
-    ═══════════════════════════════════════════════════ -->
-        <section class="section" id="secHistorico">
 
             <div class="card">
                 <div class="card-title" style="justify-content:space-between">

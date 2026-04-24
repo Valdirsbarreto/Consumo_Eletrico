@@ -173,8 +173,8 @@ body {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 1.25rem;
-  margin-bottom: 1rem;
+  padding: 1rem;
+  margin-bottom: 0.8rem;
   backdrop-filter: blur(10px);
   transition: background 0.2s;
 }
@@ -243,16 +243,16 @@ body {
 
 .dial-input {
   width: 100%;
-  aspect-ratio: 1 / 1.1;
+  aspect-ratio: 1 / 0.8;
   background: rgba(0, 0, 0, 0.4);
   border: 2px solid rgba(0, 212, 255, 0.25);
   border-radius: 12px;
   color: var(--text-primary);
   font-family: var(--font);
-  font-size: 1.7rem;
+  font-size: 1.8rem;
   font-weight: 800;
   text-align: center;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: all 0.2s;
   -webkit-appearance: none;
   appearance: none;
   outline: none;
@@ -303,7 +303,7 @@ body {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 0.8rem 1.4rem;
+  padding: 0.7rem 1.2rem;
   border: none;
   border-radius: var(--radius-sm);
   font-family: var(--font);
