@@ -320,7 +320,7 @@ Retorne EXCLUSIVAMENTE um objeto JSON válido, sem comentários ou blocos de có
                                 { inline_data: { mime_type: file.type, data: base64Data } }
                             ]
                         }],
-                        generationConfig: { temperature: 0.1, maxOutputTokens: 512 }
+                        generationConfig: { temperature: 0.1, maxOutputTokens: 8192 }
                     })
                 });
 
