@@ -214,7 +214,11 @@
             <div class="card">
                 <div class="card-title" style="justify-content:space-between">
                     📋 Histórico de Leituras
-                    <button class="btn-insert-prev" id="btnInsertPrev">+ Inserir leitura anterior</button>
+                    <div style="display:flex; gap:8px;">
+                        <input type="file" id="fileImport" accept=".pdf, image/png, image/jpeg, image/jpg" style="display:none;" />
+                        <button class="btn-secondary" id="btnImportFile" onclick="document.getElementById('fileImport').click()" style="padding:0.4rem 0.6rem;">📄 Importar Conta</button>
+                        <button class="btn-insert-prev" id="btnInsertPrev">+ Manual</button>
+                    </div>
                 </div>
                 <div class="history-list" id="historyList">
                     <div class="empty-state">

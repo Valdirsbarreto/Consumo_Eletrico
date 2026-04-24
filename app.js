@@ -242,6 +242,104 @@ Responda APENAS com exatamente 4 dígitos numéricos representando a leitura. Na
 }
 
 // ─────────────────────────────────────────────────────────────
+//  IMPORT FILE (PDF or Image) WITH GEMINI
+// ─────────────────────────────────────────────────────────────
+function initImportFile() {
+    const fileInput = document.getElementById('fileImport');
+    if (!fileInput) return;
+
+    fileInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const GEMINI_KEY = window.APP_CONFIG?.GEMINI_KEY || localStorage.getItem('GEMINI_KEY');
+        if (!GEMINI_KEY) {
+            showToast('⚠️ Chave API do Gemini não configurada.', true);
+            fileInput.value = '';
+            return;
+        }
+
+        showToast('🤖 Analisando documento com IA...');
+        const btn = document.getElementById('btnImportFile');
+        btn.textContent = '⏳ Lendo...';
+        btn.disabled = true;
+
+        try {
+            const base64Data = await new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result.split(',')[1]);
+                reader.readAsDataURL(file);
+            });
+
+            const prompt = `Extraia os seguintes dados desta conta de energia elétrica em formato JSON estrito:
+1. "date_atual": a data da leitura atual no formato YYYY-MM-DD.
+2. "date_next": a data da próxima leitura no formato YYYY-MM-DD.
+3. "raw_atual": o número do medidor atual (apenas números). Se houver decimal/ponto, remova (ex: 382.5 vira 3825). Geralmente localizado junto a "Tarifa Convencional".
+4. "consumo": o total de kWh consumidos no período (apenas números inteiros).
+
+Retorne EXCLUSIVAMENTE um objeto JSON válido, sem markdown e sem bloco de código delimitador.`;
+
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [
+                            { text: prompt },
+                            { inlineData: { mimeType: file.type, data: base64Data } }
+                        ]
+                    }],
+                    generationConfig: { responseMimeType: "application/json" }
+                })
+            });
+
+            if (!res.ok) throw new Error('Erro na API Gemini');
+            const data = await res.json();
+            const aiText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (!aiText) throw new Error('Resposta vazia da IA');
+
+            const json = JSON.parse(aiText);
+            
+            if (!json.date_atual || !json.raw_atual) throw new Error('Dados incompletos extraídos');
+
+            const rawAtual = parseInt(json.raw_atual);
+            if (isNaN(rawAtual)) throw new Error('Não foi possível ler o medidor');
+
+            const MULT10 = 10;
+            const newReading = {
+                id: Date.now(),
+                timestamp: json.date_atual,
+                raw: rawAtual,
+                kwh: rawAtual * MULT10,
+                dateNext: json.date_next || '',
+                expected: json.consumo ? parseInt(json.consumo) : 0
+            };
+
+            const readings = db.get(SK_READINGS) || [];
+            if (readings.some(r => r.timestamp === newReading.timestamp)) {
+                showToast('⚠️ Leitura para esta data já existe no histórico!', true);
+                return;
+            }
+
+            readings.push(newReading);
+            readings.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+            db.set(SK_READINGS, readings);
+
+            showToast('✅ Conta importada com sucesso!');
+            refresh();
+            
+        } catch (err) {
+            console.error('Erro na importação:', err);
+            showToast(`❌ Falha ao importar: ${err.message}`, true);
+        } finally {
+            btn.textContent = '📄 Importar Conta';
+            btn.disabled = false;
+            fileInput.value = '';
+        }
+    });
+}
+
+// ─────────────────────────────────────────────────────────────
 //  DATE DEFAULTS
 // ─────────────────────────────────────────────────────────────
 function initDateDefaults() {
@@ -1004,6 +1102,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initDials();
     initDateDefaults();
     initRegisterBtn();
+    initImportFile();
     initModal();
     initApplianceCalc();
     seedHistoricalData();   // ← popula histórico na 1ª abertura
