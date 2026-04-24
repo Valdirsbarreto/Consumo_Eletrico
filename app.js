@@ -257,14 +257,10 @@ function initCameraLeitura() {
 
             let GEMINI_KEY = (typeof APP_CONFIG !== 'undefined' ? APP_CONFIG.GEMINI_KEY : null) || localStorage.getItem('GEMINI_KEY');
             if (!GEMINI_KEY) {
-                GEMINI_KEY = prompt("API Key do Gemini não encontrada.\\n\\nComo você está rodando na Vercel (onde o config.js fica oculto por segurança), cole sua chave da API do Gemini abaixo para salvá-la no seu navegador:");
-                if (GEMINI_KEY) {
-                    localStorage.setItem('GEMINI_KEY', GEMINI_KEY);
-                } else {
-                    showToast('⚠️ Chave API do Gemini não configurada.', true);
-                    fileInput.value = '';
-                    return;
-                }
+                document.getElementById('apiKeyCard').style.display = 'block';
+                showToast('⚠️ Cole sua chave do Gemini primeiro.', true);
+                fileInput.value = '';
+                return;
             }
 
             const photoPreviewImg = document.getElementById('photoPreviewImg');
@@ -369,6 +365,21 @@ Retorne EXCLUSIVAMENTE um objeto JSON válido, sem comentários ou blocos de có
     handleFile('cameraLeitura', 'btnCameraLeitura');
     handleFile('cameraUpload', 'btnUploadLeitura');
 
+    // Botão de Salvar API Key
+    const btnSaveApiKey = document.getElementById('btnSaveApiKey');
+    if (btnSaveApiKey) {
+        btnSaveApiKey.addEventListener('click', () => {
+            const val = document.getElementById('geminiKeyInput').value.trim();
+            if (val) {
+                localStorage.setItem('GEMINI_KEY', val);
+                document.getElementById('apiKeyCard').style.display = 'none';
+                showToast('✅ Chave salva com sucesso!');
+            } else {
+                showToast('⚠️ Chave inválida', true);
+            }
+        });
+    }
+
     // Botão de Aplicar
     const btnApplyAi = document.getElementById('btnApplyAi');
     if (btnApplyAi) {
@@ -414,14 +425,10 @@ function initImportFile() {
 
             let GEMINI_KEY = (typeof APP_CONFIG !== 'undefined' ? APP_CONFIG.GEMINI_KEY : null) || localStorage.getItem('GEMINI_KEY');
             if (!GEMINI_KEY) {
-                GEMINI_KEY = prompt("API Key do Gemini não encontrada.\\n\\nComo você está rodando na Vercel (onde o config.js fica oculto por segurança), cole sua chave da API do Gemini abaixo para salvá-la no seu navegador:");
-                if (GEMINI_KEY) {
-                    localStorage.setItem('GEMINI_KEY', GEMINI_KEY);
-                } else {
-                    showToast('⚠️ Chave API do Gemini não configurada.', true);
-                    fileInput.value = '';
-                    return;
-                }
+                document.getElementById('apiKeyCard').style.display = 'block';
+                showToast('⚠️ Cole sua chave do Gemini na aba Relógio primeiro.', true);
+                fileInput.value = '';
+                return;
             }
 
             showToast('🤖 Analisando documento com IA...');
