@@ -272,29 +272,34 @@ function initCameraLeitura() {
                 reader.readAsDataURL(file);
             });
 
-            const prompt = `Você é um especialista em leitura de medidores de energia elétrica analógicos com ponteiros (relógios).
-Esta imagem mostra um medidor elétrico analógico com 4 mostradores circulares, cada um com números de 0 a 9 e um ponteiro.
+            // Resgata a leitura anterior para servir de contexto lógico à IA (Master Manager advice!)
+            const readings = db.get(SK_READINGS) || [];
+            const lastRaw = readings.length > 0 ? readings[readings.length - 1].raw : null;
+            const contextText = lastRaw 
+                ? `\n\nCONTEXTO DE NEGÓCIO IMPORTANTE: A leitura ANTERIOR deste medidor foi ${lastRaw}. A nova leitura extraída desta imagem DEVE ser MAIOR OU IGUAL a ${lastRaw}. Use esta informação crucial para resolver ambiguidades (ex: se um ponteiro parecer apontar para 2, mas a leitura anterior for 3825, a nova leitura não pode ser menor que 3000, logo você deve reavaliar os ponteiros com este viés de crescimento).` 
+                : '';
 
-REGRAS DE LEITURA:
-1. Leia os mostradores da ESQUERDA para a DIREITA: Milhar, Centena, Dezena, Unidade.
-2. O sentido dos números alterna:
-   - 1º mostrador (Milhar): ANTI-HORÁRIO
-   - 2º mostrador (Centena): HORÁRIO
-   - 3º mostrador (Dezena): ANTI-HORÁRIO
-   - 4º mostrador (Unidade): HORÁRIO
-3. SE o ponteiro estiver ENTRE dois números, a leitura SEMPRE será o MENOR número (ex: entre 3 e 4, a leitura é 3). A exceção é entre 9 e 0 (onde 9 é o menor).
-4. Retorne EXCLUSIVAMENTE os 4 dígitos finais em sequência, sem nenhum outro caractere ou explicação (Exemplo: 3870).`;
+            const prompt = `Você é um motor de extração de dados altamente especializado em medidores de energia analógicos com ponteiros.
+
+TAREFA:
+1. Analise a imagem do medidor e identifique os 4 círculos numéricos da ESQUERDA para a DIREITA (Milhar, Centena, Dezena, Unidade).
+2. O sentido dos números alterna obrigatoriamente:
+   - Milhar e Dezena: Sentido ANTI-HORÁRIO
+   - Centena e Unidade: Sentido HORÁRIO
+3. REGRA DE LEITURA: Se o ponteiro estiver ENTRE dois números, a leitura SEMPRE será o MENOR número (ex: entre 3 e 4, a leitura é 3). A única exceção é entre 9 e 0 (onde 9 é o menor). O ponteiro da esquerda só avança para o próximo número quando o ponteiro da direita ultrapassa o zero.${contextText}`;
 
             const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
+                    systemInstruction: { parts: [{ text: "Retorne EXCLUSIVAMENTE um objeto JSON válido contendo uma única chave chamada 'leitura' contendo os 4 dígitos extraídos em formato string. Exemplo: {\"leitura\": \"3870\"}" }] },
                     contents: [{
                         parts: [
                             { text: prompt },
                             { inlineData: { mimeType: file.type, data: base64Data } }
                         ]
-                    }]
+                    }],
+                    generationConfig: { responseMimeType: "application/json" }
                 })
             });
 
@@ -302,10 +307,18 @@ REGRAS DE LEITURA:
             const data = await res.json();
             const aiText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
             
-            const digits = aiText.replace(/\D/g, '');
-            let best = null;
-            if (digits.length >= 4) {
-                best = digits.slice(0, 4);
+            // Tratamento do retorno JSON
+            let jsonRet;
+            try {
+                jsonRet = JSON.parse(aiText);
+            } catch(e) {
+                throw new Error('Falha ao processar o JSON retornado pela IA.');
+            }
+
+            let best = jsonRet.leitura || '';
+            best = best.replace(/\D/g, '');
+            if (best.length > 4) {
+                best = best.slice(0, 4);
             }
 
             if (best && best.length === 4) {
