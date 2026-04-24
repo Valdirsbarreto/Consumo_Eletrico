@@ -44,8 +44,8 @@
         <button class="nav-tab" data-tab="grafico" id="tabGrafico">
             <span class="tab-icon">📊</span>Gráfico
         </button>
-        <button class="nav-tab" data-tab="calc" id="tabCalc">
-            <span class="tab-icon">🔌</span>Aparelhos
+        <button class="nav-tab" data-tab="camera" id="tabCamera">
+            <span class="tab-icon">⌚</span>Relógio
         </button>
     </nav>
 
@@ -79,11 +79,8 @@
 
 
 
-
-                <div class="dial-info" style="display:flex; justify-content:space-between; align-items:center;">
-                    <div>ℹ️ Digite o dígito de cada ponteiro, da <strong>esquerda para a direita</strong></div>
-                    <input type="file" id="cameraLeitura" accept="image/*" capture="environment" style="display:none;" />
-                    <button class="btn-secondary" id="btnCameraLeitura" onclick="document.getElementById('cameraLeitura').click()" style="padding:0.4rem 0.6rem; min-width:max-content; margin-left:10px;">📷 Ler com IA</button>
+                <div class="dial-info" style="text-align:center;">
+                    ℹ️ Digite o dígito de cada ponteiro, da <strong>esquerda para a direita</strong>
                 </div>
 
                 <div class="dials-grid">
@@ -275,62 +272,35 @@
         <!-- ══================================================
          SEÇÃO 4 — CALCULADORA DE APARELHOS
     ═══════════════════════════════════════════════════ -->
-        <section class="section" id="secCalc">
-
+        <section class="section" id="secCamera">
             <div class="card">
-                <div class="card-title">💰 Tarifa de Energia</div>
-                <div class="tariff-row">
-                    <label for="tariffInput">R$ / kWh:</label>
-                    <div class="input-group">
-                        <input type="number" id="tariffInput" class="form-input" step="0.01" min="0" value="0.95"
-                            placeholder="0.95" inputmode="decimal" aria-label="Tarifa por kWh" />
-                        <span class="unit">R$</span>
+                <div class="card-title">📷 Ler Relógio com IA</div>
+                <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem; text-align:center;">
+                    Tire uma foto ou importe uma imagem dos mostradores do seu relógio analógico.
+                </p>
+
+                <div style="display:flex; gap:10px; justify-content:center; margin-bottom:1.5rem;">
+                    <input type="file" id="cameraLeitura" accept="image/*" capture="environment" style="display:none;" />
+                    <button class="btn-primary" id="btnCameraLeitura" onclick="document.getElementById('cameraLeitura').click()" style="flex:1;">📷 Câmera</button>
+                    
+                    <input type="file" id="cameraUpload" accept="image/*" style="display:none;" />
+                    <button class="btn-secondary" id="btnUploadLeitura" onclick="document.getElementById('cameraUpload').click()" style="flex:1;">📁 Arquivo</button>
+                </div>
+
+                <div class="chart-wrapper" style="text-align:center; min-height:150px; display:flex; flex-direction:column; justify-content:center; align-items:center; background:rgba(0,0,0,0.2); border-radius:8px; padding:15px; border: 1px dashed rgba(255,255,255,0.1);">
+                    <img id="photoPreviewImg" style="max-width:100%; max-height:180px; border-radius:6px; display:none; margin-bottom:15px; border:1px solid rgba(255,255,255,0.1); box-shadow:0 4px 15px rgba(0,0,0,0.3);" />
+                    
+                    <div id="aiStatus" style="font-size:0.9rem; color:var(--text-muted); margin-bottom:10px;">Aguardando foto...</div>
+                    
+                    <div id="aiResultBox" style="display:none; text-align:center; width:100%; background:rgba(0, 212, 255, 0.05); padding:15px; border-radius:8px; border: 1px solid rgba(0, 212, 255, 0.2);">
+                        <div style="font-size:0.8rem; color:var(--accent-blue); text-transform:uppercase; letter-spacing:1px; margin-bottom:5px;">Leitura Identificada</div>
+                        <div id="aiResultDigits" style="font-size:3rem; font-weight:700; letter-spacing:8px; color:var(--text-primary); text-shadow:0 0 15px rgba(0, 212, 255, 0.4); margin-bottom:10px;">----</div>
+                        
+                        <button class="btn-primary" id="btnApplyAi" style="width:100%; background:linear-gradient(135deg, var(--accent-green), #00b359); box-shadow:0 4px 15px rgba(0, 230, 118, 0.3);">✅ Transferir para Leitura</button>
                     </div>
                 </div>
             </div>
-
-            <div class="card">
-                <div class="card-title">➕ Adicionar Aparelho</div>
-
-                <div class="appliance-add-form">
-                    <div>
-                        <div class="col-label">Aparelho</div>
-                        <input type="text" id="appName" class="form-input" placeholder="Ex: Geladeira"
-                            aria-label="Nome do aparelho" />
-                    </div>
-                    <div>
-                        <div class="col-label">Potência (W)</div>
-                        <input type="number" id="appPower" class="form-input" placeholder="150" min="1"
-                            inputmode="numeric" aria-label="Potência em watts" />
-                    </div>
-                    <div>
-                        <div class="col-label">Horas/dia</div>
-                        <input type="number" id="appHours" class="form-input" placeholder="24" min="0.1" max="24"
-                            step="0.5" inputmode="decimal" aria-label="Horas de uso por dia" />
-                    </div>
-                    <button class="btn-add" id="btnAddAppliance" aria-label="Adicionar">＋</button>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-title">🔌 Seus Aparelhos</div>
-                <div class="appliance-list" id="applianceList">
-                    <div class="empty-state">
-                        <span class="empty-icon">🔌</span>
-                        <p>Nenhum aparelho cadastrado ainda.</p>
-                    </div>
-                </div>
-
-                <div class="appliance-total" id="applianceTotal" style="display:none;">
-                    <div>
-                        <div class="label">Total estimado/mês</div>
-                        <div class="cost" id="totalCost"></div>
-                    </div>
-                    <div class="value" id="totalKwh"></div>
-                </div>
-            </div>
-
-        </section><!-- /secCalc -->
+        </section><!-- /secCamera -->
 
     </main>
 

@@ -245,102 +245,154 @@ Responda APENAS com exatamente 4 dígitos numéricos representando a leitura. Na
 //  CAMERA LEITURA WITH GEMINI
 // ─────────────────────────────────────────────────────────────
 function initCameraLeitura() {
-    const fileInput = document.getElementById('cameraLeitura');
-    if (!fileInput) return;
+    let pendingAiDigits = '';
 
-    fileInput.addEventListener('change', async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
+    const handleFile = async (fileInputId, btnId) => {
+        const fileInput = document.getElementById(fileInputId);
+        if (!fileInput) return;
 
-        const GEMINI_KEY = window.APP_CONFIG?.GEMINI_KEY || localStorage.getItem('GEMINI_KEY');
-        if (!GEMINI_KEY) {
-            showToast('⚠️ Chave API do Gemini não configurada.', true);
-            fileInput.value = '';
-            return;
-        }
+        fileInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
 
-        showToast('🤖 Lendo ponteiros com IA...');
-        const btn = document.getElementById('btnCameraLeitura');
-        const originalText = btn.textContent;
-        btn.textContent = '⏳ Lendo...';
-        btn.disabled = true;
+            const GEMINI_KEY = window.APP_CONFIG?.GEMINI_KEY || localStorage.getItem('GEMINI_KEY');
+            if (!GEMINI_KEY) {
+                showToast('⚠️ Chave API do Gemini não configurada.', true);
+                fileInput.value = '';
+                return;
+            }
 
-        try {
-            const base64Data = await new Promise((resolve) => {
-                const reader = new FileReader();
-                reader.onload = () => resolve(reader.result.split(',')[1]);
-                reader.readAsDataURL(file);
-            });
-
-            // Resgata a leitura anterior para servir de contexto lógico à IA (Master Manager advice!)
-            const readings = db.get(SK_READINGS) || [];
-            const lastRaw = readings.length > 0 ? readings[readings.length - 1].raw : null;
-            const contextText = lastRaw 
-                ? `\n\nCONTEXTO DE NEGÓCIO IMPORTANTE: A leitura ANTERIOR deste medidor foi ${lastRaw}. A nova leitura extraída desta imagem DEVE ser MAIOR OU IGUAL a ${lastRaw}. Use esta informação crucial para resolver ambiguidades (ex: se um ponteiro parecer apontar para 2, mas a leitura anterior for 3825, a nova leitura não pode ser menor que 3000, logo você deve reavaliar os ponteiros com este viés de crescimento).` 
-                : '';
-
-            const prompt = `Você é um motor de extração de dados altamente especializado em medidores de energia analógicos com ponteiros.
-
-TAREFA:
-1. Analise a imagem do medidor e identifique os 4 círculos numéricos da ESQUERDA para a DIREITA (Milhar, Centena, Dezena, Unidade).
-2. O sentido dos números alterna obrigatoriamente:
-   - Milhar e Dezena: Sentido ANTI-HORÁRIO
-   - Centena e Unidade: Sentido HORÁRIO
-3. REGRA DE LEITURA: Se o ponteiro estiver ENTRE dois números, a leitura SEMPRE será o MENOR número (ex: entre 3 e 4, a leitura é 3). A única exceção é entre 9 e 0 (onde 9 é o menor). O ponteiro da esquerda só avança para o próximo número quando o ponteiro da direita ultrapassa o zero.${contextText}`;
-
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    systemInstruction: { parts: [{ text: "Retorne EXCLUSIVAMENTE um objeto JSON válido contendo uma única chave chamada 'leitura' contendo os 4 dígitos extraídos em formato string. Exemplo: {\"leitura\": \"3870\"}" }] },
-                    contents: [{
-                        parts: [
-                            { text: prompt },
-                            { inlineData: { mimeType: file.type, data: base64Data } }
-                        ]
-                    }],
-                    generationConfig: { responseMimeType: "application/json" }
-                })
-            });
-
-            if (!res.ok) throw new Error('Erro na API Gemini');
-            const data = await res.json();
-            const aiText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            const photoPreviewImg = document.getElementById('photoPreviewImg');
+            const aiStatus = document.getElementById('aiStatus');
+            const aiResultBox = document.getElementById('aiResultBox');
+            const aiResultDigits = document.getElementById('aiResultDigits');
+            const btn = document.getElementById(btnId);
             
-            // Tratamento do retorno JSON
-            let jsonRet;
+            const originalText = btn.textContent;
+            btn.textContent = '⏳ Lendo...';
+            btn.disabled = true;
+            aiStatus.textContent = '🤖 Analisando os 4 mostradores...';
+            aiResultBox.style.display = 'none';
+            pendingAiDigits = '';
+
             try {
-                jsonRet = JSON.parse(aiText);
-            } catch(e) {
-                throw new Error('Falha ao processar o JSON retornado pela IA.');
-            }
-
-            let best = jsonRet.leitura || '';
-            best = best.replace(/\D/g, '');
-            if (best.length > 4) {
-                best = best.slice(0, 4);
-            }
-
-            if (best && best.length === 4) {
-                const d = best.split('');
-                ['d0', 'd1', 'd2', 'd3'].forEach((id, i) => {
-                    document.getElementById(id).value = d[i];
+                const base64Data = await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result.split(',')[1]);
+                    reader.readAsDataURL(file);
                 });
-                updatePreview();
-                showToast(`✅ Ponteiros lidos: ${best}! Confira antes de registrar.`);
-            } else {
-                throw new Error('Não consegui identificar os 4 ponteiros na foto.');
+
+                // Show preview
+                photoPreviewImg.src = 'data:' + file.type + ';base64,' + base64Data;
+                photoPreviewImg.style.display = 'block';
+
+                const readings = db.get(SK_READINGS) || [];
+                const lastRaw = readings.length > 0 ? readings[readings.length - 1].raw : null;
+                const contextText = lastRaw 
+                    ? `\\n\\nContexto: A leitura anterior foi ${lastRaw}. A nova leitura deve ser maior ou igual.` 
+                    : '';
+
+                const prompt = `Você é um motor de extração de dados especializado em medidores de energia analógicos e faturas de eletricidade.
+
+Tarefa:
+1. Analise a imagem do medidor de ponteiros fornecida.
+2. Identifique os 4 círculos (Milhar, Centena, Dezena, Unidade).
+3. Aplique a lógica de leitura analógica:
+   - Círculos 1 e 3: Sentido horário.
+   - Círculos 2 e 4: Sentido anti-horário.
+   - Regra: Se o ponteiro estiver entre dois números, use o menor. Se estiver entre 9 e 0, use 9.
+4. Identifique o multiplicador no visor (ex: "Multiplicar por 10").
+5. Se a imagem for uma conta de luz (PDF/Foto), localize: 'Leitura Atual', 'Data de Vencimento' e 'Valor Total'.
+
+Contexto extra: ${contextText}
+
+Saída:
+Retorne EXCLUSIVAMENTE um objeto JSON válido, sem comentários ou blocos de código markdown.`;
+
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        systemInstruction: { parts: [{ text: "Retorne o JSON no formato: { 'leitura_nominal': string, 'leitura_calculada': number, 'multiplicador': number }" }] },
+                        contents: [{
+                            parts: [
+                                { text: prompt },
+                                { inlineData: { mimeType: file.type, data: base64Data } }
+                            ]
+                        }],
+                        generationConfig: { responseMimeType: "application/json" }
+                    })
+                });
+
+                if (!res.ok) throw new Error('Erro na API Gemini');
+                const data = await res.json();
+                const aiText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+                
+                let jsonRet;
+                try {
+                    jsonRet = JSON.parse(aiText);
+                } catch(e) {
+                    throw new Error('Falha ao processar o JSON retornado pela IA.');
+                }
+
+                let best = String(jsonRet.leitura_nominal || '');
+                best = best.replace(/\D/g, '');
+                if (best.length > 4) best = best.slice(0, 4);
+
+                if (best && best.length === 4) {
+                    aiStatus.textContent = '✅ Sucesso!';
+                    aiResultDigits.textContent = best;
+                    aiResultBox.style.display = 'block';
+                    pendingAiDigits = best;
+                    showToast('✅ Ponteiros decifrados com sucesso!');
+                } else {
+                    throw new Error('Não consegui identificar os 4 ponteiros na foto.');
+                }
+                
+            } catch (err) {
+                console.error('Erro na leitura da foto:', err);
+                aiStatus.textContent = `❌ ${err.message}`;
+                showToast(`❌ Falha: ${err.message}`, true);
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
+                fileInput.value = '';
             }
+        });
+    };
+
+    handleFile('cameraLeitura', 'btnCameraLeitura');
+    handleFile('cameraUpload', 'btnUploadLeitura');
+
+    // Botão de Aplicar
+    const btnApplyAi = document.getElementById('btnApplyAi');
+    if (btnApplyAi) {
+        btnApplyAi.addEventListener('click', () => {
+            if (!pendingAiDigits || pendingAiDigits.length !== 4) return;
             
-        } catch (err) {
-            console.error('Erro na leitura da foto:', err);
-            showToast(`❌ Falha: ${err.message}`, true);
-        } finally {
-            btn.textContent = originalText;
-            btn.disabled = false;
-            fileInput.value = '';
-        }
-    });
+            // Transportar para a aba de Leitura
+            const d = pendingAiDigits.split('');
+            ['d0', 'd1', 'd2', 'd3'].forEach((id, i) => {
+                document.getElementById(id).value = d[i];
+            });
+            updatePreview();
+            
+            // Trocar aba
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelector('[data-tab="leitura"]').classList.add('active');
+            document.getElementById('secLeitura').classList.add('active');
+            
+            // Reset state
+            document.getElementById('aiResultBox').style.display = 'none';
+            document.getElementById('photoPreviewImg').style.display = 'none';
+            document.getElementById('photoPreviewImg').src = '';
+            document.getElementById('aiStatus').textContent = 'Aguardando foto...';
+            pendingAiDigits = '';
+            
+            showToast('✅ Leitura importada. Revise e salve!');
+        });
+    }
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -1213,7 +1265,6 @@ document.addEventListener('DOMContentLoaded', () => {
     initRegisterBtn();
     initImportFile();
     initModal();
-    initApplianceCalc();
     seedHistoricalData();   // ← popula histórico na 1ª abertura
     refresh();
 });
