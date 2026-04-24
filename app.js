@@ -953,19 +953,19 @@ function seedHistoricalData() {
     const MULT10 = 10;
     // consumo = diferença bruta do marcador; consumo × 10 = kWh reais
     const SEED = [
-        { timestamp: '2025-01-05', raw: 3243, dateNext: '2025-02-04', consumo: 49 },
-        { timestamp: '2025-02-04', raw: 3292, dateNext: '2025-03-06', consumo: 49 },
-        { timestamp: '2025-03-06', raw: 3333, dateNext: '2025-04-03', consumo: 41 },
-        { timestamp: '2025-04-03', raw: 3375, dateNext: '2025-05-05', consumo: 42 },
-        { timestamp: '2025-05-05', raw: 3418, dateNext: '2025-06-04', consumo: 43 },
-        { timestamp: '2025-06-04', raw: 3461, dateNext: '2025-07-07', consumo: 43 },
-        { timestamp: '2025-07-07', raw: 3500, dateNext: '2025-08-06', consumo: 39 },
-        { timestamp: '2025-08-06', raw: 3534, dateNext: '2025-09-05', consumo: 34 },
-        { timestamp: '2025-09-05', raw: 3574, dateNext: '2025-10-06', consumo: 40 },
-        { timestamp: '2025-10-06', raw: 3616, dateNext: '2025-11-06', consumo: 42 },
-        { timestamp: '2025-11-06', raw: 3658, dateNext: '2025-12-08', consumo: 42 },
-        { timestamp: '2025-12-08', raw: 3700, dateNext: '2026-01-06', consumo: 42 },
-        { timestamp: '2026-01-06', raw: 3742, dateNext: '2026-02-03', consumo: 42 },
+        { timestamp: '2025-04-03', raw: 3333, dateNext: '2025-05-05', consumo: 41 },
+        { timestamp: '2025-05-05', raw: 3375, dateNext: '2025-06-04', consumo: 42 },
+        { timestamp: '2025-06-04', raw: 3418, dateNext: '2025-07-07', consumo: 43 },
+        { timestamp: '2025-07-07', raw: 3461, dateNext: '2025-08-06', consumo: 43 },
+        { timestamp: '2025-08-06', raw: 3500, dateNext: '2025-09-05', consumo: 39 },
+        { timestamp: '2025-09-05', raw: 3534, dateNext: '2025-10-06', consumo: 34 },
+        { timestamp: '2025-10-06', raw: 3574, dateNext: '2025-11-06', consumo: 40 },
+        { timestamp: '2025-11-06', raw: 3616, dateNext: '2025-12-08', consumo: 42 },
+        { timestamp: '2025-12-08', raw: 3658, dateNext: '2026-01-06', consumo: 42 },
+        { timestamp: '2026-01-06', raw: 3700, dateNext: '2026-02-03', consumo: 42 },
+        { timestamp: '2026-02-03', raw: 3742, dateNext: '2026-03-04', consumo: 42 },
+        { timestamp: '2026-03-04', raw: 3783, dateNext: '2026-04-02', consumo: 41 },
+        { timestamp: '2026-04-02', raw: 3825, dateNext: '2026-05-05', consumo: 42 }
     ];
 
     const entries = SEED.map((item, i) => ({
