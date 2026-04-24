@@ -330,18 +330,39 @@ function updatePreview() {
     // Try to calculate consumption vs last saved reading
     const readings = db.get(SK_READINGS) || [];
     if (readings.length > 0) {
-        const lastRaw = readings[readings.length - 1].raw;
+        const last = readings[readings.length - 1];
+        const lastRaw = last.raw;
         const diff = raw - lastRaw;
+
+        // Calculate expected future reading
+        let prevDailyRate = 0;
+        if (readings.length >= 2) {
+            const prev = readings[readings.length - 2];
+            const prevDays = Math.max(1, Math.round((new Date(last.timestamp + 'T12:00:00') - new Date(prev.timestamp + 'T12:00:00')) / 86400000));
+            prevDailyRate = ((last.raw - prev.raw) * MULT) / prevDays;
+        } else {
+            prevDailyRate = last.expected ? (last.expected / 30) : 0;
+        }
+        
+        const periodStart = new Date(last.timestamp + 'T12:00:00');
+        const nextVal = document.getElementById('dateNext').value;
+        const periodEnd = new Date((nextVal ? nextVal : last.dateNext) + 'T12:00:00');
+        const periodTotal = Math.max(1, Math.round((periodEnd - periodStart) / 86400000));
+        
+        const expectedTotalKwh = prevDailyRate * periodTotal;
+        const expectedRawDiff = Math.round(expectedTotalKwh / MULT);
+        const expectedFutureRaw = lastRaw + expectedRawDiff;
+
         if (diff >= 0) {
             const consumoKwh = diff * MULT;
             kwhEl.textContent = consumoKwh.toLocaleString('pt-BR') + ' kWh';
-            if (totalEl) totalEl.textContent =
-                `Marcador anterior: ${String(lastRaw).padStart(4, '0')} • Total acumulado: ${(raw * MULT).toLocaleString('pt-BR')} kWh`;
+            if (totalEl) totalEl.innerHTML =
+                `Anterior: <strong>${String(lastRaw).padStart(4, '0')}</strong> &nbsp;&nbsp;|&nbsp;&nbsp; Previsto: <strong>${String(expectedFutureRaw).padStart(4, '0')}</strong>`;
         } else {
             // Warning: current < previous
             kwhEl.textContent = '⚠️ Menor que leitura anterior';
-            if (totalEl) totalEl.textContent =
-                `Última leitura: ${String(lastRaw).padStart(4, '0')} (${(lastRaw * MULT).toLocaleString('pt-BR')} kWh)`;
+            if (totalEl) totalEl.innerHTML =
+                `Anterior: <strong>${String(lastRaw).padStart(4, '0')}</strong> &nbsp;&nbsp;|&nbsp;&nbsp; Previsto: <strong>${String(expectedFutureRaw).padStart(4, '0')}</strong>`;
         }
     } else {
         // No previous reading — show total with note
