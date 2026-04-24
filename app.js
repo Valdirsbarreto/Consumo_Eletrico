@@ -330,13 +330,27 @@ Retorne EXCLUSIVAMENTE um objeto JSON válido, sem comentários ou blocos de có
                     throw new Error(`[${res.status}] Detalhe: ${errText}`);
                 }
                 const data = await res.json();
-                const aiText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+                
+                // Gemini 2.5 pode retornar múltiplas parts (thinking + resposta)
+                const parts = data?.candidates?.[0]?.content?.parts || [];
+                let aiText = '';
+                for (const p of parts) {
+                    if (p.text && !p.thought) aiText += p.text;
+                }
+                if (!aiText) aiText = parts.map(p => p.text || '').join('');
+                
+                console.log('Resposta bruta da IA:', aiText);
                 
                 let jsonRet;
                 try {
-                    const cleaned = aiText.replace(/```json|```/g, '').trim();
+                    // Limpar markdown e extrair JSON
+                    let cleaned = aiText.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+                    // Tentar encontrar o JSON no texto
+                    const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+                    if (jsonMatch) cleaned = jsonMatch[0];
                     jsonRet = JSON.parse(cleaned);
                 } catch(e) {
+                    console.error('Texto da IA não parseável:', aiText);
                     throw new Error('Falha ao processar o JSON retornado pela IA.');
                 }
 
