@@ -153,9 +153,10 @@ async function analyzeWithOCR() {
     const btn = document.getElementById('btnAnalyze');
     const status = document.getElementById('ocrStatus');
 
-    // ── API Keys (configuradas pelo usuário nas configurações do app) ──
-    const GEMINI_KEY = localStorage.getItem('gemini_api_key') || '';
-    const OPENAI_KEY = localStorage.getItem('openai_api_key') || '';
+    // ── API Keys: config.js (local) > localStorage > vazio ──
+    const cfg = (typeof APP_CONFIG !== 'undefined') ? APP_CONFIG : {};
+    const GEMINI_KEY = localStorage.getItem('gemini_api_key') || cfg.GEMINI_KEY || '';
+    const OPENAI_KEY = localStorage.getItem('openai_api_key') || cfg.OPENAI_KEY || '';
 
     if (!imgEl.src || imgEl.src === window.location.href) {
         showToast('⚠️ Tire ou importe uma foto primeiro.', true); return;

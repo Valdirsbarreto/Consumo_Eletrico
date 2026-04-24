@@ -1,0 +1,10 @@
+# Configuração local (contém chaves de API)
+config.js
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# Editores
+.vscode/
+*.swp
