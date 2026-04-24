@@ -986,8 +986,6 @@ function seedHistoricalData() {
 document.addEventListener('DOMContentLoaded', () => {
     initPWA();
     initTabs();
-    initCamera();
-    initOCR();
     initDials();
     initDateDefaults();
     initRegisterBtn();
