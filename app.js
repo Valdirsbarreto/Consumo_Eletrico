@@ -314,14 +314,13 @@ Retorne EXCLUSIVAMENTE um objeto JSON válido, sem comentários ou blocos de có
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        systemInstruction: { parts: [{ text: "Retorne o JSON no formato: { 'leitura_nominal': string, 'leitura_calculada': number, 'multiplicador': number }" }] },
                         contents: [{
                             parts: [
-                                { text: prompt },
-                                { inlineData: { mimeType: file.type, data: base64Data } }
+                                { text: `Retorne APENAS um objeto JSON puro (sem markdown): {"leitura_nominal": string, "leitura_calculada": number, "multiplicador": number}. ${prompt}` },
+                                { inline_data: { mime_type: file.type, data: base64Data } }
                             ]
                         }],
-                        generationConfig: { responseMimeType: "application/json" }
+                        generationConfig: { temperature: 0.1, maxOutputTokens: 512 }
                     })
                 });
 
@@ -335,7 +334,8 @@ Retorne EXCLUSIVAMENTE um objeto JSON válido, sem comentários ou blocos de có
                 
                 let jsonRet;
                 try {
-                    jsonRet = JSON.parse(aiText);
+                    const cleaned = aiText.replace(/```json|```/g, '').trim();
+                    jsonRet = JSON.parse(cleaned);
                 } catch(e) {
                     throw new Error('Falha ao processar o JSON retornado pela IA.');
                 }
