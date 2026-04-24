@@ -242,10 +242,10 @@ Responda APENAS com exatamente 4 dígitos numéricos representando a leitura. Na
 }
 
 // ─────────────────────────────────────────────────────────────
-//  IMPORT FILE (PDF or Image) WITH GEMINI
+//  CAMERA LEITURA WITH GEMINI
 // ─────────────────────────────────────────────────────────────
-function initImportFile() {
-    const fileInput = document.getElementById('fileImport');
+function initCameraLeitura() {
+    const fileInput = document.getElementById('cameraLeitura');
     if (!fileInput) return;
 
     fileInput.addEventListener('change', async (e) => {
@@ -259,12 +259,103 @@ function initImportFile() {
             return;
         }
 
-        showToast('🤖 Analisando documento com IA...');
-        const btn = document.getElementById('btnImportFile');
+        showToast('🤖 Lendo ponteiros com IA...');
+        const btn = document.getElementById('btnCameraLeitura');
+        const originalText = btn.textContent;
         btn.textContent = '⏳ Lendo...';
         btn.disabled = true;
 
         try {
+            const base64Data = await new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result.split(',')[1]);
+                reader.readAsDataURL(file);
+            });
+
+            const prompt = `Você é um especialista em leitura de medidores de energia elétrica analógicos com ponteiros (relógios).
+Esta imagem mostra um medidor elétrico analógico com 4 mostradores circulares, cada um com números de 0 a 9 e um ponteiro.
+
+REGRAS DE LEITURA:
+1. Leia os mostradores da ESQUERDA para a DIREITA: Milhar, Centena, Dezena, Unidade.
+2. O sentido dos números alterna:
+   - 1º mostrador (Milhar): ANTI-HORÁRIO
+   - 2º mostrador (Centena): HORÁRIO
+   - 3º mostrador (Dezena): ANTI-HORÁRIO
+   - 4º mostrador (Unidade): HORÁRIO
+3. SE o ponteiro estiver ENTRE dois números, a leitura SEMPRE será o MENOR número (ex: entre 3 e 4, a leitura é 3). A exceção é entre 9 e 0 (onde 9 é o menor).
+4. Retorne EXCLUSIVAMENTE os 4 dígitos finais em sequência, sem nenhum outro caractere ou explicação (Exemplo: 3870).`;
+
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [
+                            { text: prompt },
+                            { inlineData: { mimeType: file.type, data: base64Data } }
+                        ]
+                    }]
+                })
+            });
+
+            if (!res.ok) throw new Error('Erro na API Gemini');
+            const data = await res.json();
+            const aiText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            
+            const digits = aiText.replace(/\D/g, '');
+            let best = null;
+            if (digits.length >= 4) {
+                best = digits.slice(0, 4);
+            }
+
+            if (best && best.length === 4) {
+                const d = best.split('');
+                ['d0', 'd1', 'd2', 'd3'].forEach((id, i) => {
+                    document.getElementById(id).value = d[i];
+                });
+                updatePreview();
+                showToast(`✅ Ponteiros lidos: ${best}! Confira antes de registrar.`);
+            } else {
+                throw new Error('Não consegui identificar os 4 ponteiros na foto.');
+            }
+            
+        } catch (err) {
+            console.error('Erro na leitura da foto:', err);
+            showToast(`❌ Falha: ${err.message}`, true);
+        } finally {
+            btn.textContent = originalText;
+            btn.disabled = false;
+            fileInput.value = '';
+        }
+    });
+}
+
+// ─────────────────────────────────────────────────────────────
+//  IMPORT FILE (PDF or Image) WITH GEMINI
+// ─────────────────────────────────────────────────────────────
+function initImportFile() {
+    const handleFile = async (fileInputId, btnId) => {
+        const fileInput = document.getElementById(fileInputId);
+        if (!fileInput) return;
+
+        fileInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const GEMINI_KEY = window.APP_CONFIG?.GEMINI_KEY || localStorage.getItem('GEMINI_KEY');
+            if (!GEMINI_KEY) {
+                showToast('⚠️ Chave API do Gemini não configurada.', true);
+                fileInput.value = '';
+                return;
+            }
+
+            showToast('🤖 Analisando documento com IA...');
+            const btn = document.getElementById(btnId);
+            const originalText = btn.textContent;
+            btn.textContent = '⏳ Lendo...';
+            btn.disabled = true;
+
+            try {
             const base64Data = await new Promise((resolve) => {
                 const reader = new FileReader();
                 reader.onload = () => resolve(reader.result.split(',')[1]);
@@ -332,11 +423,15 @@ Retorne EXCLUSIVAMENTE um objeto JSON válido, sem markdown e sem bloco de códi
             console.error('Erro na importação:', err);
             showToast(`❌ Falha ao importar: ${err.message}`, true);
         } finally {
-            btn.textContent = '📄 Importar Conta';
+            btn.textContent = originalText;
             btn.disabled = false;
             fileInput.value = '';
         }
     });
+    };
+
+    handleFile('fileImport', 'btnImportFile');
+    handleFile('cameraImport', 'btnCameraImport');
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -1100,6 +1195,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initPWA();
     initTabs();
     initDials();
+    initCameraLeitura();
     initDateDefaults();
     initRegisterBtn();
     initImportFile();

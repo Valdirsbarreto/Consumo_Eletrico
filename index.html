@@ -80,8 +80,10 @@
 
 
 
-                <div class="dial-info">
-                    ℹ️ Digite o dígito de cada ponteiro, da <strong>esquerda para a direita</strong>
+                <div class="dial-info" style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>ℹ️ Digite o dígito de cada ponteiro, da <strong>esquerda para a direita</strong></div>
+                    <input type="file" id="cameraLeitura" accept="image/*" capture="environment" style="display:none;" />
+                    <button class="btn-secondary" id="btnCameraLeitura" onclick="document.getElementById('cameraLeitura').click()" style="padding:0.4rem 0.6rem; min-width:max-content; margin-left:10px;">📷 Ler com IA</button>
                 </div>
 
                 <div class="dials-grid">
@@ -216,7 +218,9 @@
                     📋 Histórico de Leituras
                     <div style="display:flex; gap:8px;">
                         <input type="file" id="fileImport" accept=".pdf, image/png, image/jpeg, image/jpg" style="display:none;" />
-                        <button class="btn-secondary" id="btnImportFile" onclick="document.getElementById('fileImport').click()" style="padding:0.4rem 0.6rem;">📄 Importar Conta</button>
+                        <input type="file" id="cameraImport" accept="image/*" capture="environment" style="display:none;" />
+                        <button class="btn-secondary" id="btnImportFile" onclick="document.getElementById('fileImport').click()" style="padding:0.4rem 0.6rem;">📄 Arquivo</button>
+                        <button class="btn-secondary" id="btnCameraImport" onclick="document.getElementById('cameraImport').click()" style="padding:0.4rem 0.6rem;">📷 Foto</button>
                         <button class="btn-insert-prev" id="btnInsertPrev">+ Manual</button>
                     </div>
                 </div>
