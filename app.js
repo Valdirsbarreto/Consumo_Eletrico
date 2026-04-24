@@ -341,10 +341,9 @@ function updatePreview() {
         const periodEnd = new Date(last.dateNext + 'T12:00:00');
         const periodTotal = Math.max(1, Math.round((periodEnd - periodStart) / 86400000));
         
-        // Pega a data da leitura atual para saber quantos dias se passaram
-        const dateInput = document.getElementById('dateReading').value;
-        const todayVal = dateInput ? new Date(dateInput + 'T12:00:00') : new Date();
-        const daysPassed = Math.max(0, Math.round((todayVal - periodStart) / 86400000));
+        // Pega a data real de HOJE para calcular a "Meta Hoje", ignorando a caixinha
+        const todayReal = new Date();
+        const daysPassed = Math.max(0, Math.round((todayReal - periodStart) / 86400000));
         
         const expectedTotalKwh = prevDailyRate * periodTotal;
         const expByToday = prevDailyRate * daysPassed;
