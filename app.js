@@ -359,6 +359,11 @@ function updatePreview() {
         
         const expectedRawDiff = Math.round(expectedTotalKwh / MULT);
         const expectedFutureRaw = lastRaw + expectedRawDiff;
+        
+        const expectedRawTodayDiff = Math.round(expByToday / MULT);
+        const expectedTodayRaw = lastRaw + expectedRawTodayDiff;
+
+        const kwhWrap = document.getElementById('previewKwhWrap') || kwhEl;
 
         if (diff >= 0) {
             const consumoKwh = diff * MULT;
@@ -376,7 +381,7 @@ function updatePreview() {
                 icon = '🟢 OK:';
             }
             
-            kwhEl.innerHTML = `<span style="color:${color}">${icon} ${consumoKwh.toLocaleString('pt-BR')} kWh</span>`;
+            kwhWrap.innerHTML = `<span style="font-weight:normal; color:var(--text-muted)">Meta Hoje: ${String(expectedTodayRaw).padStart(4, '0')} &nbsp;|&nbsp; </span><strong style="color:${color}">${icon} ${consumoKwh.toLocaleString('pt-BR')} kWh</strong>`;
             if (totalEl) totalEl.innerHTML =
                 `<div style="font-size:1.1rem; color:var(--text-primary); margin-top:8px; display:flex; justify-content:space-around; background:rgba(0,0,0,0.3); padding:8px; border-radius:8px;">
                     <div>Anterior: <strong style="color:var(--text-muted)">${String(lastRaw).padStart(4, '0')}</strong></div>
