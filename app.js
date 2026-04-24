@@ -342,16 +342,14 @@ function updatePreview() {
             prevDailyRate = last.expected ? (last.expected / 30) : 0;
         }
         
+        // A meta do mês atual vai desde a leitura anterior até a data que estava prevista (last.dateNext)
         const periodStart = new Date(last.timestamp + 'T12:00:00');
+        const periodEnd = new Date(last.dateNext + 'T12:00:00');
+        const periodTotal = Math.max(1, Math.round((periodEnd - periodStart) / 86400000));
         
-        // Pega as datas dos campos, se não tiver usa o default
+        // Pega a data da leitura atual para saber quantos dias se passaram
         const dateInput = document.getElementById('dateReading').value;
         const todayVal = dateInput ? new Date(dateInput + 'T12:00:00') : new Date();
-        
-        const nextVal = document.getElementById('dateNext').value;
-        const periodEnd = new Date((nextVal ? nextVal : last.dateNext) + 'T12:00:00');
-        
-        const periodTotal = Math.max(1, Math.round((periodEnd - periodStart) / 86400000));
         const daysPassed = Math.max(0, Math.round((todayVal - periodStart) / 86400000));
         
         const expectedTotalKwh = prevDailyRate * periodTotal;
