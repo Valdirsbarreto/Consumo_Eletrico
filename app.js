@@ -253,12 +253,6 @@ function initDateDefaults() {
 
     if (readings.length > 0) {
         const last = readings[readings.length - 1];
-        if (last.dateNext) {
-            // Se tivermos a data prevista da última leitura, usamos ela como a data de hoje
-            defaultReadingDate = new Date(last.dateNext + 'T12:00:00');
-            defaultNextDate = new Date(last.dateNext + 'T12:00:00');
-            defaultNextDate.setDate(defaultNextDate.getDate() + 30);
-        }
         if (last.expected) {
             defaultExpected = last.expected;
         }
