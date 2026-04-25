@@ -293,22 +293,32 @@ function initCameraLeitura() {
                     ? `\\n\\nContexto: A leitura anterior foi ${lastRaw}. A nova leitura deve ser maior ou igual.` 
                     : '';
 
-                const prompt = `Você é um motor de extração de dados especializado em medidores de energia analógicos e faturas de eletricidade.
+                const prompt = `Você é um especialista em leitura de medidores de energia eletromecânicos de 4 ponteiros (relógios analógicos tipo Nansen).
 
-Tarefa:
-1. Analise a imagem do medidor de ponteiros fornecida.
-2. Identifique os 4 círculos (Milhar, Centena, Dezena, Unidade).
-3. Aplique a lógica de leitura analógica:
-   - Círculos 1 e 3: Sentido horário.
-   - Círculos 2 e 4: Sentido anti-horário.
-   - Regra: Se o ponteiro estiver entre dois números, use o menor. Se estiver entre 9 e 0, use 9.
-4. Identifique o multiplicador no visor (ex: "Multiplicar por 10").
-5. Se a imagem for uma conta de luz (PDF/Foto), localize: 'Leitura Atual', 'Data de Vencimento' e 'Valor Total'.
+ORDEM DOS CÍRCULOS (da ESQUERDA para DIREITA na imagem):
+- Círculo 1 = MILHAR (×1000)
+- Círculo 2 = CENTENA (×100)
+- Círculo 3 = DEZENA (×10)
+- Círculo 4 = UNIDADE (×1)
 
-Contexto extra: ${contextText}
+SENTIDO DE GIRO (CRÍTICO — os círculos ALTERNAM o sentido):
+- Círculo 1 (Milhar): sentido HORÁRIO (0,1,2,3,4,5,6,7,8,9)
+- Círculo 2 (Centena): sentido ANTI-HORÁRIO (0,9,8,7,6,5,4,3,2,1)
+- Círculo 3 (Dezena): sentido HORÁRIO (0,1,2,3,4,5,6,7,8,9)
+- Círculo 4 (Unidade): sentido ANTI-HORÁRIO (0,9,8,7,6,5,4,3,2,1)
 
-Saída:
-Retorne EXCLUSIVAMENTE um objeto JSON válido, sem comentários ou blocos de código markdown.`;
+REGRA DE LEITURA:
+- Observe a posição exata do ponteiro em cada círculo.
+- Se o ponteiro está ENTRE dois números, registre o número MENOR pelo qual o ponteiro JÁ PASSOU no sentido de giro daquele círculo.
+- Exceção: entre 9 e 0, o valor é 9.
+
+MULTIPLICADOR: Após obter os 4 dígitos, multiplique o valor final por 10 (conforme instrução "MULTIPLICAR POR 10" no visor).
+
+${contextText}
+
+SAÍDA — Retorne APENAS um JSON puro (sem markdown, sem explicação, sem bloco de código):
+{"leitura_nominal": "ABCD", "multiplicador": 10, "leitura_calculada": 0}
+Onde ABCD são os 4 dígitos na ordem Milhar-Centena-Dezena-Unidade.`;
 
                 const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`, {
                     method: 'POST',
@@ -316,7 +326,7 @@ Retorne EXCLUSIVAMENTE um objeto JSON válido, sem comentários ou blocos de có
                     body: JSON.stringify({
                         contents: [{
                             parts: [
-                                { text: `Retorne APENAS um objeto JSON puro (sem markdown): {"leitura_nominal": string, "leitura_calculada": number, "multiplicador": number}. ${prompt}` },
+                                { text: prompt },
                                 { inline_data: { mime_type: file.type, data: base64Data } }
                             ]
                         }],
