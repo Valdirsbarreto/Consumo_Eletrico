@@ -308,30 +308,34 @@ function initCameraLeitura() {
                 const readings = db.get(SK_READINGS) || [];
                 const lastRaw = readings.length > 0 ? readings[readings.length - 1].raw : null;
                 const contextText = lastRaw 
-                    ? `\\n\\nContexto: A leitura anterior foi ${lastRaw}. A nova leitura deve ser maior ou igual.` 
+                    ? `\n\nCONTEXTO: A leitura anterior foi ${lastRaw}. A nova leitura DEVE ser maior ou igual a ${lastRaw}. Use isso para validar.` 
                     : '';
 
-                const prompt = `Você é um especialista em leitura de medidores analógicos Nansen.
-Sua tarefa é extrair o valor dos 4 ponteiros (Milhar, Centena, Dezena, Unidade).
+                const prompt = `Você é especialista em leitura de medidores analógicos Nansen PN-5D.
 
-LÓGICA DE VALIDAÇÃO CRUZADA:
-1. Comece a análise da DIREITA para a ESQUERDA (Unidade para Milhar).
-2. Use o ponteiro da direita para decidir o da esquerda:
-   - Se o ponteiro da DIREITA ainda não passou pelo 0, o ponteiro da ESQUERDA deve ser lido como o número MENOR, mesmo que pareça estar em cima do maior.
-3. SENTIDOS:
-   - 1º e 3º (Milhar/Dezena): Horário.
-   - 2º e 4º (Centena/Unidade): Anti-horário.
-4. MULTIPLICADOR: Identifique o fator no visor (ex: "MULTIPLICAR POR 10") e aplique ao valor final.
+ATENÇÃO — CARACTERÍSTICAS DESTA IMAGEM:
+- Há reflexo de acrílico protetor nos mostradores. IGNORE o reflexo e foque nos ponteiros.
+- Pode haver um adesivo/código de barras laranja cobrindo parte dos dials. IGNORE-O.
+- Os 4 mostradores circulares estão na parte SUPERIOR do medidor, abaixo do texto "kWh".
+
+ORDEM DOS MOSTRADORES (da esquerda para a direita):
+- 1º = MILHAR | 2º = CENTENA | 3º = DEZENA | 4º = UNIDADE
+
+SENTIDO DE GIRO:
+- 1º e 3º (Milhar, Dezena): HORÁRIO
+- 2º e 4º (Centena, Unidade): ANTI-HORÁRIO
+
+REGRA: Ponteiro entre dois números → leia o MENOR (o que já passou). Exceto entre 9 e 0 → leia 9.
+
+ANALISE da DIREITA para ESQUERDA:
+1. Leia o 4º mostrador (Unidade) — o mais à direita.
+2. Se Unidade < 5, o 3º (Dezena) deve ser o número menor visual.
+3. Repita a validação para Centena e Milhar.
 
 ${contextText}
 
-RETORNO — Retorne APENAS um JSON puro (sem markdown):
-{
-  "analise_passo_a_passo": "descrição breve de cada ponteiro",
-  "leitura_nominal": "ABCD",
-  "fator": 10,
-  "leitura_final_kwh": 0
-}`;
+RETORNO — JSON puro sem markdown:
+{"analise_passo_a_passo": "descreva cada ponteiro", "leitura_nominal": "ABCD", "fator": 10, "leitura_final_kwh": 0}`;
 
                 const geminiBody = {
                     contents: [{
