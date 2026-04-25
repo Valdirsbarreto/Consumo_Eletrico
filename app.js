@@ -267,7 +267,6 @@ function initCameraLeitura() {
             const photoPreviewImg = document.getElementById('photoPreviewImg');
             const aiStatus = document.getElementById('aiStatus');
             const aiResultBox = document.getElementById('aiResultBox');
-            const aiResultDigits = document.getElementById('aiResultDigits');
             const btn = document.getElementById(btnId);
             
             const originalText = btn.textContent;
@@ -311,6 +310,12 @@ function initCameraLeitura() {
                     ? `\n\nCONTEXTO: A leitura anterior foi ${lastRaw}. A nova leitura DEVE ser maior ou igual a ${lastRaw}. Use isso para validar.` 
                     : '';
 
+                // Few-shot dinâmico: inclui a última correção salva pelo usuário
+                const lastCorrection = db.get('ai_last_correction');
+                const correctionHint = lastCorrection
+                    ? `\n\nPREVIOUS CORRECTION: Last time you predicted ${lastCorrection.predicted} but the correct reading was ${lastCorrection.correct}. Pay special attention to pointers ${lastCorrection.wrongDigits.join(' and ')}.`
+                    : '';
+
                 const prompt = `You are an expert at reading analog kWh energy meters (Nansen model).
 
 Here is an example of a correct reading for this meter type:
@@ -319,8 +324,8 @@ Here is an example of a correct reading for this meter type:
 - Pointer 3 (Tens): Between 8 and 9 → Result 8
 - Pointer 4 (Units): Between 1 and 2 → Result 1
 Final reading: 3881.
-
-Now extract the reading from the new image using the same logic. The 4 dials are in the upper section of the meter below "kWh". Read left to right (thousands, hundreds, tens, units). Dials alternate rotation direction.${contextText}
+${correctionHint}
+Now extract the reading from the new image. The 4 dials are below "kWh", read left to right. Dials alternate rotation direction.${contextText}
 
 Return ONLY valid JSON with no markdown: {"leitura_nominal": "XXXX", "fator": 10, "leitura_final_kwh": 0}`;
 
@@ -328,14 +333,12 @@ Return ONLY valid JSON with no markdown: {"leitura_nominal": "XXXX", "fator": 10
                     contents: [{
                         parts: [
                             { text: prompt },
-                            { inline_data: { mime_type: file.type, data: base64Data } }
+                            { inline_data: { mime_type: mimeType, data: base64Data } }
                         ]
                     }],
                     generationConfig: { temperature: 0.1, maxOutputTokens: 8192 }
                 };
 
-                // Usar proxy Vercel se disponível (sem expor chave); fallback para chave local
-                const useProxy = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
                 let res;
                 if (useProxy) {
                     res = await fetch('/api/gemini', {
@@ -344,7 +347,6 @@ Return ONLY valid JSON with no markdown: {"leitura_nominal": "XXXX", "fator": 10
                         body: JSON.stringify({ model: 'gemini-2.5-flash', body: geminiBody })
                     });
                 } else {
-                    // Desenvolvimento local — usa chave do config.js
                     res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -454,28 +456,38 @@ Return ONLY valid JSON with no markdown: {"leitura_nominal": "XXXX", "fator": 10
     const btnApplyAi = document.getElementById('btnApplyAi');
     if (btnApplyAi) {
         btnApplyAi.addEventListener('click', () => {
-            if (!pendingAiDigits || pendingAiDigits.length !== 4) return;
-            
+            // Ler valores atuais dos inputs (usuário pode ter corrigido com os spinners)
+            const currentDigits = ['d0','d1','d2','d3']
+                .map(id => { const el = document.getElementById(id); return el ? String(parseInt(el.value)||0) : '0'; })
+                .join('');
+
+            if (currentDigits.length !== 4) return;
+
+            // Salvar correção no localStorage para few-shot dinâmico
+            if (pendingAiDigits && pendingAiDigits !== currentDigits) {
+                const names = ['Thousands','Hundreds','Tens','Units'];
+                const wrongDigits = names.filter((_, i) => pendingAiDigits[i] !== currentDigits[i]);
+                db.set('ai_last_correction', { predicted: pendingAiDigits, correct: currentDigits, wrongDigits, ts: new Date().toISOString() });
+                console.log(`📝 Correção: IA=${pendingAiDigits} → Correto=${currentDigits} (${wrongDigits.join(', ')})`);
+            }
+
             // Transportar para a aba de Leitura
-            const d = pendingAiDigits.split('');
-            ['d0', 'd1', 'd2', 'd3'].forEach((id, i) => {
-                document.getElementById(id).value = d[i];
-            });
+            ['d0','d1','d2','d3'].forEach((id, i) => { document.getElementById(id).value = currentDigits[i]; });
             updatePreview();
-            
+
             // Trocar aba
             document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
             document.querySelector('[data-tab="leitura"]').classList.add('active');
             document.getElementById('secLeitura').classList.add('active');
-            
+
             // Reset state
             document.getElementById('aiResultBox').style.display = 'none';
             document.getElementById('photoPreviewImg').style.display = 'none';
             document.getElementById('photoPreviewImg').src = '';
             document.getElementById('aiStatus').textContent = 'Aguardando foto...';
             pendingAiDigits = '';
-            
+
             showToast('✅ Leitura importada. Revise e salve!');
         });
     }
