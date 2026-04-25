@@ -1,4 +1,4 @@
-const CACHE_NAME = 'consumo-eletrico-v37';
+const CACHE_NAME = 'consumo-eletrico-v38';
 const ASSETS = [
   './',
   './index.html',
