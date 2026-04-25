@@ -293,38 +293,27 @@ function initCameraLeitura() {
                     ? `\\n\\nContexto: A leitura anterior foi ${lastRaw}. A nova leitura deve ser maior ou igual.` 
                     : '';
 
-                const prompt = `Você é um especialista em leitura de medidores de energia eletromecânicos de 4 ponteiros (relógios analógicos tipo Nansen).
+                const prompt = `Você é um especialista em leitura de medidores analógicos Nansen.
+Sua tarefa é extrair o valor dos 4 ponteiros (Milhar, Centena, Dezena, Unidade).
 
-ORDEM DOS CÍRCULOS (da ESQUERDA para DIREITA na imagem):
-- Círculo 1 = MILHAR (×1000)
-- Círculo 2 = CENTENA (×100)
-- Círculo 3 = DEZENA (×10)
-- Círculo 4 = UNIDADE (×1)
-
-SENTIDO DE GIRO (os círculos ALTERNAM o sentido):
-- Círculo 1 (Milhar): sentido HORÁRIO
-- Círculo 2 (Centena): sentido ANTI-HORÁRIO
-- Círculo 3 (Dezena): sentido HORÁRIO
-- Círculo 4 (Unidade): sentido ANTI-HORÁRIO
-
-REGRA DE LEITURA:
-- Se o ponteiro está ENTRE dois números, registre o número MENOR pelo qual o ponteiro JÁ PASSOU no sentido de giro daquele círculo.
-- Exceção: entre 9 e 0, o valor é 9.
-
-PROCESSO OBRIGATÓRIO — analise cada círculo individualmente, da esquerda para a direita:
-Passo 1: Olhe APENAS o Círculo 1 (mais à esquerda). Anote o dígito.
-Passo 2: Olhe APENAS o Círculo 2. Anote o dígito.
-Passo 3: Olhe APENAS o Círculo 3. Anote o dígito.
-Passo 4: Olhe APENAS o Círculo 4 (mais à direita). Anote o dígito.
-Passo 5: Combine os 4 dígitos na ordem 1-2-3-4.
-
-MULTIPLICADOR: Multiplique o resultado por 10 (conforme "MULTIPLICAR POR 10" no visor).
+LÓGICA DE VALIDAÇÃO CRUZADA:
+1. Comece a análise da DIREITA para a ESQUERDA (Unidade para Milhar).
+2. Use o ponteiro da direita para decidir o da esquerda:
+   - Se o ponteiro da DIREITA ainda não passou pelo 0, o ponteiro da ESQUERDA deve ser lido como o número MENOR, mesmo que pareça estar em cima do maior.
+3. SENTIDOS:
+   - 1º e 3º (Milhar/Dezena): Horário.
+   - 2º e 4º (Centena/Unidade): Anti-horário.
+4. MULTIPLICADOR: Identifique o fator no visor (ex: "MULTIPLICAR POR 10") e aplique ao valor final.
 
 ${contextText}
 
-SAÍDA — Retorne APENAS um JSON puro (sem markdown, sem explicação):
-{"leitura_nominal": "ABCD", "multiplicador": 10, "leitura_calculada": 0}
-Onde ABCD são os 4 dígitos na ordem Milhar-Centena-Dezena-Unidade.`;
+RETORNO — Retorne APENAS um JSON puro (sem markdown):
+{
+  "analise_passo_a_passo": "descrição breve de cada ponteiro",
+  "leitura_nominal": "ABCD",
+  "fator": 10,
+  "leitura_final_kwh": 0
+}`;
 
                 const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`, {
                     method: 'POST',
