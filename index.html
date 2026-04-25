@@ -314,21 +314,17 @@
                     <img id="photoPreviewImg"
                         style="max-width:100%; max-height:180px; border-radius:6px; display:none; margin-bottom:15px; border:1px solid rgba(255,255,255,0.1); box-shadow:0 4px 15px rgba(0,0,0,0.3);" />
 
-                    <div id="aiStatus" style="font-size:0.9rem; color:var(--text-muted); margin-bottom:10px;">Aguardando
-                        foto...</div>
+                    <div id="aiStatus" style="font-size:0.9rem; color:var(--text-muted); margin-bottom:10px;">Aguardando foto...</div>
 
-                    <div id="aiResultBox"
-                        style="display:none; text-align:center; width:100%; background:rgba(0, 212, 255, 0.05); padding:15px; border-radius:8px; border: 1px solid rgba(0, 212, 255, 0.2);">
-                        <div
-                            style="font-size:0.8rem; color:var(--accent-blue); text-transform:uppercase; letter-spacing:1px; margin-bottom:5px;">
-                            Leitura Identificada</div>
-                        <div id="aiResultDigits"
-                            style="font-size:3rem; font-weight:700; letter-spacing:8px; color:var(--text-primary); text-shadow:0 0 15px rgba(0, 212, 255, 0.4); margin-bottom:10px;">
-                            ----</div>
-
-                        <button class="btn-primary" id="btnApplyAi"
-                            style="width:100%; background:linear-gradient(135deg, var(--accent-green), #00b359); box-shadow:0 4px 15px rgba(0, 230, 118, 0.3);">✅
-                            Transferir para Leitura</button>
+                    <div id="aiResultBox" style="display:none; text-align:center; width:100%; background:rgba(0,212,255,0.05); padding:15px; border-radius:8px; border:1px solid rgba(0,212,255,0.2);">
+                        <div style="font-size:0.8rem; color:var(--accent-blue); text-transform:uppercase; letter-spacing:1px; margin-bottom:10px;">Leitura Identificada — Confirme ou Corrija</div>
+                        <div style="display:flex; justify-content:center; gap:8px; margin-bottom:12px;">
+                            <div style="text-align:center;"><div style="font-size:0.6rem; color:var(--text-muted); margin-bottom:3px;">MILHAR</div><div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><button onclick="adjustDigit('cam0',1)" style="background:rgba(0,212,255,0.15);border:none;color:var(--accent-blue);font-size:1rem;width:36px;height:24px;border-radius:4px;cursor:pointer;">▲</button><input id="cam0" type="number" min="0" max="9" style="width:48px;height:52px;font-size:2rem;font-weight:700;text-align:center;background:rgba(0,0,0,0.3);border:1px solid rgba(0,212,255,0.3);border-radius:6px;color:var(--text-primary);" /><button onclick="adjustDigit('cam0',-1)" style="background:rgba(0,212,255,0.15);border:none;color:var(--accent-blue);font-size:1rem;width:36px;height:24px;border-radius:4px;cursor:pointer;">▼</button></div></div>
+                            <div style="text-align:center;"><div style="font-size:0.6rem; color:var(--text-muted); margin-bottom:3px;">CENTENA</div><div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><button onclick="adjustDigit('cam1',1)" style="background:rgba(0,212,255,0.15);border:none;color:var(--accent-blue);font-size:1rem;width:36px;height:24px;border-radius:4px;cursor:pointer;">▲</button><input id="cam1" type="number" min="0" max="9" style="width:48px;height:52px;font-size:2rem;font-weight:700;text-align:center;background:rgba(0,0,0,0.3);border:1px solid rgba(0,212,255,0.3);border-radius:6px;color:var(--text-primary);" /><button onclick="adjustDigit('cam1',-1)" style="background:rgba(0,212,255,0.15);border:none;color:var(--accent-blue);font-size:1rem;width:36px;height:24px;border-radius:4px;cursor:pointer;">▼</button></div></div>
+                            <div style="text-align:center;"><div style="font-size:0.6rem; color:var(--text-muted); margin-bottom:3px;">DEZENA</div><div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><button onclick="adjustDigit('cam2',1)" style="background:rgba(0,212,255,0.15);border:none;color:var(--accent-blue);font-size:1rem;width:36px;height:24px;border-radius:4px;cursor:pointer;">▲</button><input id="cam2" type="number" min="0" max="9" style="width:48px;height:52px;font-size:2rem;font-weight:700;text-align:center;background:rgba(0,0,0,0.3);border:1px solid rgba(0,212,255,0.3);border-radius:6px;color:var(--text-primary);" /><button onclick="adjustDigit('cam2',-1)" style="background:rgba(0,212,255,0.15);border:none;color:var(--accent-blue);font-size:1rem;width:36px;height:24px;border-radius:4px;cursor:pointer;">▼</button></div></div>
+                            <div style="text-align:center;"><div style="font-size:0.6rem; color:var(--text-muted); margin-bottom:3px;">UNIDADE</div><div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><button onclick="adjustDigit('cam3',1)" style="background:rgba(0,212,255,0.15);border:none;color:var(--accent-blue);font-size:1rem;width:36px;height:24px;border-radius:4px;cursor:pointer;">▲</button><input id="cam3" type="number" min="0" max="9" style="width:48px;height:52px;font-size:2rem;font-weight:700;text-align:center;background:rgba(0,0,0,0.3);border:1px solid rgba(0,212,255,0.3);border-radius:6px;color:var(--text-primary);" /><button onclick="adjustDigit('cam3',-1)" style="background:rgba(0,212,255,0.15);border:none;color:var(--accent-blue);font-size:1rem;width:36px;height:24px;border-radius:4px;cursor:pointer;">▼</button></div></div>
+                        </div>
+                        <button class="btn-primary" id="btnApplyAi" style="width:100%; background:linear-gradient(135deg, var(--accent-green), #00b359); box-shadow:0 4px 15px rgba(0,230,118,0.3);">✅ Transferir para Leitura</button>
                     </div>
                 </div>
             </div>

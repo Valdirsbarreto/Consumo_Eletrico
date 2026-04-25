@@ -391,7 +391,7 @@ Return ONLY valid JSON with no markdown: {"leitura_nominal": "XXXX", "fator": 10
                 if (best && best.length === 4) {
                     aiStatus.textContent = '✅ Sucesso!';
                     // Preenche os 4 inputs editáveis
-                    ['d0','d1','d2','d3'].forEach((id, i) => {
+                    ['cam0','cam1','cam2','cam3'].forEach((id, i) => {
                         const el = document.getElementById(id);
                         if (el) el.value = best[i];
                     });
@@ -430,10 +430,10 @@ Return ONLY valid JSON with no markdown: {"leitura_nominal": "XXXX", "fator": 10
     };
 
     // Quando os inputs são editados diretamente
-    ['d0','d1','d2','d3'].forEach(id => {
+    ['cam0','cam1','cam2','cam3'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.addEventListener('input', () => {
-            pendingAiDigits = ['d0','d1','d2','d3'].map(i => document.getElementById(i)?.value || '0').join('');
+            pendingAiDigits = ['cam0','cam1','cam2','cam3'].map(i => document.getElementById(i)?.value || '0').join('');
         });
     });
 
@@ -457,7 +457,7 @@ Return ONLY valid JSON with no markdown: {"leitura_nominal": "XXXX", "fator": 10
     if (btnApplyAi) {
         btnApplyAi.addEventListener('click', () => {
             // Ler valores atuais dos inputs (usuário pode ter corrigido com os spinners)
-            const currentDigits = ['d0','d1','d2','d3']
+            const currentDigits = ['cam0','cam1','cam2','cam3']
                 .map(id => { const el = document.getElementById(id); return el ? String(parseInt(el.value)||0) : '0'; })
                 .join('');
 
