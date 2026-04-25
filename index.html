@@ -117,7 +117,8 @@
                 <!-- Preview -->
                 <div class="reading-preview">
                     <div class="reading-raw" id="previewRaw" style="display:none;">– – – –</div>
-                    <div class="reading-real" style="margin-bottom:8px" id="previewKwhWrap"><strong id="previewKwh">– kWh</strong></div>
+                    <div class="reading-real" style="margin-bottom:8px" id="previewKwhWrap"><strong id="previewKwh">–
+                            kWh</strong></div>
                     <div class="reading-total" id="previewTotal"
                         style="font-size:0.68rem;color:var(--text-muted);margin-top:2px"></div>
                 </div>
@@ -150,7 +151,7 @@
          SEÇÃO 2 — HISTÓRICO
     ═══════════════════════════════════════════════════ -->
         <section class="section" id="secHistorico">
-            
+
             <!-- ── Monitor do Período Atual ── -->
             <div class="card monitor-card" id="monitorCard" style="display:none">
                 <div class="card-title">📊 Monitor do Período Atual</div>
@@ -214,10 +215,16 @@
                 <div class="card-title" style="justify-content:space-between">
                     📋 Histórico de Leituras
                     <div style="display:flex; gap:8px;">
-                        <input type="file" id="fileImport" accept=".pdf, image/png, image/jpeg, image/jpg" style="display:none;" />
-                        <input type="file" id="cameraImport" accept="image/*" capture="environment" style="display:none;" />
-                        <button class="btn-secondary" id="btnImportFile" onclick="document.getElementById('fileImport').click()" style="padding:0.4rem 0.6rem;">📄 Arquivo</button>
-                        <button class="btn-secondary" id="btnCameraImport" onclick="document.getElementById('cameraImport').click()" style="padding:0.4rem 0.6rem;">📷 Foto</button>
+                        <input type="file" id="fileImport" accept=".pdf, image/png, image/jpeg, image/jpg"
+                            style="display:none;" />
+                        <input type="file" id="cameraImport" accept="image/*" capture="environment"
+                            style="display:none;" />
+                        <button class="btn-secondary" id="btnImportFile"
+                            onclick="document.getElementById('fileImport').click()" style="padding:0.4rem 0.6rem;">📄
+                            Arquivo</button>
+                        <button class="btn-secondary" id="btnCameraImport"
+                            onclick="document.getElementById('cameraImport').click()" style="padding:0.4rem 0.6rem;">📷
+                            Foto</button>
                         <button class="btn-insert-prev" id="btnInsertPrev">+ Manual</button>
                     </div>
                 </div>
@@ -280,30 +287,48 @@
                 </p>
 
                 <div style="display:flex; gap:10px; justify-content:center; margin-bottom:1.5rem;">
-                    <input type="file" id="cameraLeitura" accept="image/*" capture="environment" style="display:none;" />
-                    <button class="btn-primary" id="btnCameraLeitura" onclick="document.getElementById('cameraLeitura').click()" style="flex:1;">📷 Câmera</button>
-                    
+                    <input type="file" id="cameraLeitura" accept="image/*" capture="environment"
+                        style="display:none;" />
+                    <button class="btn-primary" id="btnCameraLeitura"
+                        onclick="document.getElementById('cameraLeitura').click()" style="flex:1;">📷 Câmera</button>
+
                     <input type="file" id="cameraUpload" accept="image/*" style="display:none;" />
-                    <button class="btn-secondary" id="btnUploadLeitura" onclick="document.getElementById('cameraUpload').click()" style="flex:1;">📁 Arquivo</button>
+                    <button class="btn-secondary" id="btnUploadLeitura"
+                        onclick="document.getElementById('cameraUpload').click()" style="flex:1;">📁 Arquivo</button>
                 </div>
 
-                <div id="apiKeyCard" style="display:none; text-align:left; background:rgba(245, 166, 35, 0.05); padding:15px; border-radius:8px; border: 1px solid rgba(245, 166, 35, 0.3); margin-bottom:1.5rem;">
-                    <div style="font-size:0.8rem; font-weight:bold; color:var(--accent-amber); margin-bottom:8px;">⚠️ Chave API Necessária</div>
-                    <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:10px;">Cole sua chave da API do Gemini abaixo para habilitar a IA:</p>
-                    <input type="text" id="geminiKeyInput" class="form-input" placeholder="AIzaSy..." style="margin-bottom:10px; width:100%;" />
-                    <button class="btn-primary" id="btnSaveApiKey" style="width:100%; background:var(--accent-amber); color:#000;">Salvar Chave</button>
+                <div id="apiKeyCard"
+                    style="display:none; text-align:left; background:rgba(245, 166, 35, 0.05); padding:15px; border-radius:8px; border: 1px solid rgba(245, 166, 35, 0.3); margin-bottom:1.5rem;">
+                    <div style="font-size:0.8rem; font-weight:bold; color:var(--accent-amber); margin-bottom:8px;">⚠️
+                        Chave API Necessária</div>
+                    <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:10px;">Cole sua chave da API do
+                        Gemini abaixo para habilitar a IA:</p>
+                    <input type="text" id="geminiKeyInput" class="form-input" placeholder="AIzaSy..."
+                        style="margin-bottom:10px; width:100%;" />
+                    <button class="btn-primary" id="btnSaveApiKey"
+                        style="width:100%; background:var(--accent-amber); color:#000;">Salvar Chave</button>
                 </div>
 
-                <div class="chart-wrapper" style="text-align:center; min-height:150px; display:flex; flex-direction:column; justify-content:center; align-items:center; background:rgba(0,0,0,0.2); border-radius:8px; padding:15px; border: 1px dashed rgba(255,255,255,0.1);">
-                    <img id="photoPreviewImg" style="max-width:100%; max-height:180px; border-radius:6px; display:none; margin-bottom:15px; border:1px solid rgba(255,255,255,0.1); box-shadow:0 4px 15px rgba(0,0,0,0.3);" />
-                    
-                    <div id="aiStatus" style="font-size:0.9rem; color:var(--text-muted); margin-bottom:10px;">Aguardando foto...</div>
-                    
-                    <div id="aiResultBox" style="display:none; text-align:center; width:100%; background:rgba(0, 212, 255, 0.05); padding:15px; border-radius:8px; border: 1px solid rgba(0, 212, 255, 0.2);">
-                        <div style="font-size:0.8rem; color:var(--accent-blue); text-transform:uppercase; letter-spacing:1px; margin-bottom:5px;">Leitura Identificada</div>
-                        <div id="aiResultDigits" style="font-size:3rem; font-weight:700; letter-spacing:8px; color:var(--text-primary); text-shadow:0 0 15px rgba(0, 212, 255, 0.4); margin-bottom:10px;">----</div>
-                        
-                        <button class="btn-primary" id="btnApplyAi" style="width:100%; background:linear-gradient(135deg, var(--accent-green), #00b359); box-shadow:0 4px 15px rgba(0, 230, 118, 0.3);">✅ Transferir para Leitura</button>
+                <div class="chart-wrapper"
+                    style="text-align:center; min-height:150px; display:flex; flex-direction:column; justify-content:center; align-items:center; background:rgba(0,0,0,0.2); border-radius:8px; padding:15px; border: 1px dashed rgba(255,255,255,0.1);">
+                    <img id="photoPreviewImg"
+                        style="max-width:100%; max-height:180px; border-radius:6px; display:none; margin-bottom:15px; border:1px solid rgba(255,255,255,0.1); box-shadow:0 4px 15px rgba(0,0,0,0.3);" />
+
+                    <div id="aiStatus" style="font-size:0.9rem; color:var(--text-muted); margin-bottom:10px;">Aguardando
+                        foto...</div>
+
+                    <div id="aiResultBox"
+                        style="display:none; text-align:center; width:100%; background:rgba(0, 212, 255, 0.05); padding:15px; border-radius:8px; border: 1px solid rgba(0, 212, 255, 0.2);">
+                        <div
+                            style="font-size:0.8rem; color:var(--accent-blue); text-transform:uppercase; letter-spacing:1px; margin-bottom:5px;">
+                            Leitura Identificada</div>
+                        <div id="aiResultDigits"
+                            style="font-size:3rem; font-weight:700; letter-spacing:8px; color:var(--text-primary); text-shadow:0 0 15px rgba(0, 212, 255, 0.4); margin-bottom:10px;">
+                            ----</div>
+
+                        <button class="btn-primary" id="btnApplyAi"
+                            style="width:100%; background:linear-gradient(135deg, var(--accent-green), #00b359); box-shadow:0 4px 15px rgba(0, 230, 118, 0.3);">✅
+                            Transferir para Leitura</button>
                     </div>
                 </div>
             </div>
@@ -366,7 +391,8 @@
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="config.js" onerror="console.info('config.js não encontrado — use localStorage para as chaves de API.')"></script>
+    <script src="config.js"
+        onerror="console.info('config.js não encontrado — use localStorage para as chaves de API.')"></script>
     <script src="app.js"></script>
 </body>
 

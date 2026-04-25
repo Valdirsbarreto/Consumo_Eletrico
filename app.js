@@ -316,9 +316,9 @@ function initCameraLeitura() {
 Here is an example of a correct reading for this meter type:
 - Pointer 1 (Thousands): Between 3 and 4 → Result 3
 - Pointer 2 (Hundreds): Between 8 and 9 → Result 8
-- Pointer 3 (Tens): Past 7, heading to 8 → Result 7
-- Pointer 4 (Units): Between 2 and 3 → Result 2
-Final reading: 3872.
+- Pointer 3 (Tens): Between 8 and 9 → Result 8
+- Pointer 4 (Units): Between 1 and 2 → Result 1
+Final reading: 3881.
 
 Now extract the reading from the new image using the same logic. The 4 dials are in the upper section of the meter below "kWh". Read left to right (thousands, hundreds, tens, units). Dials alternate rotation direction.${contextText}
 
@@ -388,10 +388,14 @@ Return ONLY valid JSON with no markdown: {"leitura_nominal": "XXXX", "fator": 10
 
                 if (best && best.length === 4) {
                     aiStatus.textContent = '✅ Sucesso!';
-                    aiResultDigits.textContent = best;
+                    // Preenche os 4 inputs editáveis
+                    ['d0','d1','d2','d3'].forEach((id, i) => {
+                        const el = document.getElementById(id);
+                        if (el) el.value = best[i];
+                    });
                     aiResultBox.style.display = 'block';
                     pendingAiDigits = best;
-                    showToast('✅ Ponteiros decifrados com sucesso!');
+                    showToast('✅ Ponteiros decifrados! Confirme ou corrija os dígitos.');
                 } else {
                     throw new Error('Não consegui identificar os 4 ponteiros na foto.');
                 }
@@ -410,6 +414,26 @@ Return ONLY valid JSON with no markdown: {"leitura_nominal": "XXXX", "fator": 10
 
     handleFile('cameraLeitura', 'btnCameraLeitura');
     handleFile('cameraUpload', 'btnUploadLeitura');
+
+    // Função dos spinners ▲▼ nos dígitos editáveis
+    window.adjustDigit = (id, delta) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        let val = (parseInt(el.value) || 0) + delta;
+        if (val < 0) val = 9;
+        if (val > 9) val = 0;
+        el.value = val;
+        // Atualiza pendingAiDigits
+        pendingAiDigits = ['d0','d1','d2','d3'].map(i => document.getElementById(i)?.value || '0').join('');
+    };
+
+    // Quando os inputs são editados diretamente
+    ['d0','d1','d2','d3'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', () => {
+            pendingAiDigits = ['d0','d1','d2','d3'].map(i => document.getElementById(i)?.value || '0').join('');
+        });
+    });
 
     // Botão de Salvar API Key
     const btnSaveApiKey = document.getElementById('btnSaveApiKey');
