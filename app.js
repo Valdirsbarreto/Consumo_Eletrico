@@ -284,7 +284,7 @@ function initCameraLeitura() {
                     reader.onload = (ev) => {
                         const img = new Image();
                         img.onload = () => {
-                            const MAX = 1200;
+                            const MAX = 1600;
                             let w = img.width, h = img.height;
                             if (w > MAX || h > MAX) {
                                 if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
@@ -311,7 +311,17 @@ function initCameraLeitura() {
                     ? `\n\nCONTEXTO: A leitura anterior foi ${lastRaw}. A nova leitura DEVE ser maior ou igual a ${lastRaw}. Use isso para validar.` 
                     : '';
 
-                const prompt = `Read the 4 analog pointer dials on this kWh energy meter (left to right: thousands, hundreds, tens, units). The dials alternate rotation direction.${contextText}
+                const prompt = `You are an expert at reading analog kWh energy meters (Nansen model).
+
+Here is an example of a correct reading for this meter type:
+- Pointer 1 (Thousands): Between 3 and 4 → Result 3
+- Pointer 2 (Hundreds): Between 8 and 9 → Result 8
+- Pointer 3 (Tens): Past 7, heading to 8 → Result 7
+- Pointer 4 (Units): Between 2 and 3 → Result 2
+Final reading: 3872.
+
+Now extract the reading from the new image using the same logic. The 4 dials are in the upper section of the meter below "kWh". Read left to right (thousands, hundreds, tens, units). Dials alternate rotation direction.${contextText}
+
 Return ONLY valid JSON with no markdown: {"leitura_nominal": "XXXX", "fator": 10, "leitura_final_kwh": 0}`;
 
                 const geminiBody = {
