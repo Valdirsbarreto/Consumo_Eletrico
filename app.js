@@ -278,14 +278,31 @@ function initCameraLeitura() {
             pendingAiDigits = '';
 
             try {
-                const base64Data = await new Promise((resolve) => {
+                // Comprimir imagem antes de enviar (evita 413 no proxy Vercel)
+                const { base64Data, mimeType } = await new Promise((resolve) => {
                     const reader = new FileReader();
-                    reader.onload = () => resolve(reader.result.split(',')[1]);
+                    reader.onload = (ev) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            const MAX = 1200;
+                            let w = img.width, h = img.height;
+                            if (w > MAX || h > MAX) {
+                                if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+                                else { w = Math.round(w * MAX / h); h = MAX; }
+                            }
+                            const canvas = document.createElement('canvas');
+                            canvas.width = w; canvas.height = h;
+                            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                            const dataUrl = canvas.toDataURL('image/jpeg', 0.80);
+                            resolve({ base64Data: dataUrl.split(',')[1], mimeType: 'image/jpeg' });
+                        };
+                        img.src = ev.target.result;
+                    };
                     reader.readAsDataURL(file);
                 });
 
                 // Show preview
-                photoPreviewImg.src = 'data:' + file.type + ';base64,' + base64Data;
+                photoPreviewImg.src = 'data:' + mimeType + ';base64,' + base64Data;
                 photoPreviewImg.style.display = 'block';
 
                 const readings = db.get(SK_READINGS) || [];
