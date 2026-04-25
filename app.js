@@ -255,8 +255,9 @@ function initCameraLeitura() {
             const file = e.target.files[0];
             if (!file) return;
 
+            const useProxy = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
             let GEMINI_KEY = (typeof APP_CONFIG !== 'undefined' ? APP_CONFIG.GEMINI_KEY : null) || localStorage.getItem('GEMINI_KEY');
-            if (!GEMINI_KEY) {
+            if (!GEMINI_KEY && !useProxy) {
                 document.getElementById('apiKeyCard').style.display = 'block';
                 showToast('⚠️ Cole sua chave do Gemini primeiro.', true);
                 fileInput.value = '';
