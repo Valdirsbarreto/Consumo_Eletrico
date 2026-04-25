@@ -311,31 +311,8 @@ function initCameraLeitura() {
                     ? `\n\nCONTEXTO: A leitura anterior foi ${lastRaw}. A nova leitura DEVE ser maior ou igual a ${lastRaw}. Use isso para validar.` 
                     : '';
 
-                const prompt = `Você é especialista em leitura de medidores analógicos Nansen PN-5D.
-
-ATENÇÃO — CARACTERÍSTICAS DESTA IMAGEM:
-- Há reflexo de acrílico protetor nos mostradores. IGNORE o reflexo e foque nos ponteiros.
-- Pode haver um adesivo/código de barras laranja cobrindo parte dos dials. IGNORE-O.
-- Os 4 mostradores circulares estão na parte SUPERIOR do medidor, abaixo do texto "kWh".
-
-ORDEM DOS MOSTRADORES (da esquerda para a direita):
-- 1º = MILHAR | 2º = CENTENA | 3º = DEZENA | 4º = UNIDADE
-
-SENTIDO DE GIRO:
-- 1º e 3º (Milhar, Dezena): HORÁRIO
-- 2º e 4º (Centena, Unidade): ANTI-HORÁRIO
-
-REGRA: Ponteiro entre dois números → leia o MENOR (o que já passou). Exceto entre 9 e 0 → leia 9.
-
-ANALISE da DIREITA para ESQUERDA:
-1. Leia o 4º mostrador (Unidade) — o mais à direita.
-2. Se Unidade < 5, o 3º (Dezena) deve ser o número menor visual.
-3. Repita a validação para Centena e Milhar.
-
-${contextText}
-
-RETORNO — JSON puro sem markdown:
-{"analise_passo_a_passo": "descreva cada ponteiro", "leitura_nominal": "ABCD", "fator": 10, "leitura_final_kwh": 0}`;
+                const prompt = `Read the 4 analog pointer dials on this kWh energy meter (left to right: thousands, hundreds, tens, units). The dials alternate rotation direction.${contextText}
+Return ONLY valid JSON with no markdown: {"leitura_nominal": "XXXX", "fator": 10, "leitura_final_kwh": 0}`;
 
                 const geminiBody = {
                     contents: [{
