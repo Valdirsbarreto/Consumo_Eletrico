@@ -315,19 +315,33 @@ RETORNO — Retorne APENAS um JSON puro (sem markdown):
   "leitura_final_kwh": 0
 }`;
 
-                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{
-                            parts: [
-                                { text: prompt },
-                                { inline_data: { mime_type: file.type, data: base64Data } }
-                            ]
-                        }],
-                        generationConfig: { temperature: 0.1, maxOutputTokens: 8192 }
-                    })
-                });
+                const geminiBody = {
+                    contents: [{
+                        parts: [
+                            { text: prompt },
+                            { inline_data: { mime_type: file.type, data: base64Data } }
+                        ]
+                    }],
+                    generationConfig: { temperature: 0.1, maxOutputTokens: 8192 }
+                };
+
+                // Usar proxy Vercel se disponível (sem expor chave); fallback para chave local
+                const useProxy = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+                let res;
+                if (useProxy) {
+                    res = await fetch('/api/gemini', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ model: 'gemini-2.5-flash', body: geminiBody })
+                    });
+                } else {
+                    // Desenvolvimento local — usa chave do config.js
+                    res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(geminiBody)
+                    });
+                }
 
                 if (!res.ok) {
                     const errText = await res.text();
