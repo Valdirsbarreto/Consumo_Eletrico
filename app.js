@@ -13,6 +13,7 @@ const SK_READINGS = 'consumo_readings';
 const SK_APPLIANCES = 'consumo_appliances';
 const SK_TARIFF = 'consumo_tariff';
 const MULT = 10;
+let currentHistoryFilter = 'all'; // 'all' | 'conta' | 'relogio'
 
 let chartInstance = null;
 let deferredInstall = null;
@@ -471,7 +472,8 @@ Return ONLY valid JSON with no markdown: {"leitura_nominal": "XXXX", "fator": 10
                 console.log(`📝 Correção: IA=${pendingAiDigits} → Correto=${currentDigits} (${wrongDigits.join(', ')})`);
             }
 
-            // Transportar para a aba de Leitura
+            // Transportar para a aba de Leitura — marcar como origem 'relogio'
+            db.set('ai_pending_source', 'relogio');
             ['d0','d1','d2','d3'].forEach((id, i) => { document.getElementById(id).value = currentDigits[i]; });
             updatePreview();
 
@@ -526,27 +528,44 @@ function initImportFile() {
                 reader.readAsDataURL(file);
             });
 
-            const prompt = `Extraia os seguintes dados desta conta de energia elétrica em formato JSON estrito:
-1. "date_atual": a data da leitura atual no formato YYYY-MM-DD.
-2. "date_next": a data da próxima leitura no formato YYYY-MM-DD.
-3. "raw_atual": o número do medidor atual (apenas números). Se houver decimal/ponto, remova (ex: 382.5 vira 3825). Geralmente localizado junto a "Tarifa Convencional".
-4. "consumo": o total de kWh consumidos no período (apenas números inteiros).
+            const prompt = `You are a data extraction expert for Brazilian electricity bills (Light S.A.).
+Extract the following fields from this bill and return ONLY a valid JSON object:
 
-Retorne EXCLUSIVAMENTE um objeto JSON válido, sem markdown e sem bloco de código delimitador.`;
+{
+  "date_atual": "YYYY-MM-DD",  // Data desta leitura (campo 'Leitura Atual' ou 'Data de Leitura')
+  "date_next": "YYYY-MM-DD",   // Data da próxima leitura
+  "raw_atual": "NNNN",          // Leitura atual do medidor em kWh (apenas dígitos, sem decimais)
+  "raw_anterior": "NNNN",       // Leitura anterior do medidor
+  "consumo": "NNN",             // Consumo total do período em kWh (número inteiro)
+  "valor_total": "NNN.NN"       // Valor total da conta em R$
+}
 
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{
-                        parts: [
-                            { text: prompt },
-                            { inlineData: { mimeType: file.type, data: base64Data } }
-                        ]
-                    }],
-                    generationConfig: { responseMimeType: "application/json" }
-                })
-            });
+Rules:
+- For dates, look for 'Leitura Atual', 'Próxima Leitura', or similar labels
+- For the meter reading (raw_atual), look for kWh consumption table; if format is like '3825.0', use only integer part '3825'
+- Return ONLY the JSON, no markdown, no explanation`;
+
+            const useProxy = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+            let res;
+            if (useProxy) {
+                res = await fetch('/api/gemini', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ model: 'gemini-2.5-flash', body: {
+                        contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType: file.type, data: base64Data } }] }],
+                        generationConfig: { responseMimeType: 'application/json' }
+                    }})
+                });
+            } else {
+                res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType: file.type, data: base64Data } }] }],
+                        generationConfig: { responseMimeType: 'application/json' }
+                    })
+                });
+            }
 
             if (!res.ok) throw new Error('Erro na API Gemini');
             const data = await res.json();
@@ -560,14 +579,14 @@ Retorne EXCLUSIVAMENTE um objeto JSON válido, sem markdown e sem bloco de códi
             const rawAtual = parseInt(json.raw_atual);
             if (isNaN(rawAtual)) throw new Error('Não foi possível ler o medidor');
 
-            const MULT10 = 10;
             const newReading = {
                 id: Date.now(),
                 timestamp: json.date_atual,
                 raw: rawAtual,
-                kwh: rawAtual * MULT10,
+                kwh: rawAtual * MULT,
                 dateNext: json.date_next || '',
-                expected: json.consumo ? parseInt(json.consumo) : 0
+                expected: json.consumo ? parseInt(json.consumo) : 0,
+                source: 'conta'  // Importado da conta Light
             };
 
             const readings = db.get(SK_READINGS) || [];
@@ -777,7 +796,10 @@ function registerReading() {
     const expVal = parseFloat(document.getElementById('expectedKwh').value);
     const expected = (!isNaN(expVal) && expVal > 0) ? expVal : null;
 
-    readings.push({ id: Date.now(), timestamp: dateVal, raw, kwh: raw * MULT, dateNext, expected });
+    // source: 'relogio' se veio da câmera IA, 'manual' se digitado
+    const source = db.get('ai_pending_source') || 'manual';
+    db.set('ai_pending_source', null);
+    readings.push({ id: Date.now(), timestamp: dateVal, raw, kwh: raw * MULT, dateNext, expected, source });
     db.set(SK_READINGS, readings);
 
     showToast('✅ Leitura registrada!');
@@ -1062,21 +1084,50 @@ function renderLastConsumption() {
 }
 
 // ─────────────────────────────────────────────────────────────
+//  HISTORY FILTER
+// ─────────────────────────────────────────────────────────────
+function setHistoryFilter(f) {
+    currentHistoryFilter = f;
+    // Atualizar visual dos botões
+    ['filterAll','filterConta','filterRelogio'].forEach(id => {
+        const btn = document.getElementById(id);
+        if (!btn) return;
+        const active = (id === 'filter' + f.charAt(0).toUpperCase() + f.slice(1)) ||
+                       (f === 'all' && id === 'filterAll');
+        btn.style.background = active ? 'rgba(0,212,255,0.15)' : 'transparent';
+        btn.style.borderColor = active ? 'rgba(0,212,255,0.4)' : 'rgba(255,255,255,0.1)';
+        btn.style.color = active ? 'var(--accent-blue)' : 'var(--text-muted)';
+    });
+    renderHistory();
+}
+
+// ─────────────────────────────────────────────────────────────
 //  HISTORY
 // ─────────────────────────────────────────────────────────────
 function renderHistory() {
-    const readings = db.get(SK_READINGS) || [];
+    const allReadings = db.get(SK_READINGS) || [];
     const list = document.getElementById('historyList');
 
-    if (readings.length === 0) {
+    // Aplicar filtro
+    const readings = currentHistoryFilter === 'all' ? allReadings :
+                     currentHistoryFilter === 'conta' ? allReadings.filter(r => r.source === 'conta') :
+                     allReadings.filter(r => r.source !== 'conta'); // relogio + manual + undefined
+
+    if (allReadings.length === 0) {
         list.innerHTML = `<div class="empty-state"><span class="empty-icon">💭</span>
       <p>Nenhuma leitura ainda. Use "Leitura" para registrar<br>ou "Inserir leitura anterior" para começar.</p></div>`;
         return;
     }
 
+    if (readings.length === 0) {
+        const label = currentHistoryFilter === 'conta' ? '📄 Contas Light' : '🕐 Marcações do Relógio';
+        list.innerHTML = `<div class="empty-state"><span class="empty-icon">🔍</span><p>Nenhum registro do tipo "${label}" ainda.</p></div>`;
+        return;
+    }
+
     list.innerHTML = [...readings].reverse().map((r, idx) => {
-        const origIdx = readings.length - 1 - idx;
-        const prev = readings[origIdx - 1];
+        const origIdx = allReadings.findIndex(x => x.id === r.id);
+        const prev = allReadings[origIdx - 1];
 
         // ── Consumption block ──
         let consumHtml = '';
@@ -1113,9 +1164,15 @@ function renderHistory() {
         const nextBadge = r.dateNext
             ? `<div class="history-next-date">🗓️ Próxima: ${fmtDate(r.dateNext)}</div>` : '';
 
+        const sourceBadge = r.source === 'conta'
+            ? `<span style="font-size:.6rem;padding:2px 6px;border-radius:10px;background:rgba(0,212,255,0.1);color:var(--accent-blue);border:1px solid rgba(0,212,255,0.3);">📄 Conta Light</span>`
+            : r.source === 'relogio'
+            ? `<span style="font-size:.6rem;padding:2px 6px;border-radius:10px;background:rgba(0,230,118,0.1);color:var(--accent-green);border:1px solid rgba(0,230,118,0.3);">🕐 Relógio</span>`
+            : `<span style="font-size:.6rem;padding:2px 6px;border-radius:10px;background:rgba(255,255,255,0.05);color:var(--text-muted);border:1px solid rgba(255,255,255,0.1);">✏️ Manual</span>`;
+
         return `
       <div class="history-item">
-        <div class="history-date">${fmtDate(r.timestamp)}</div>
+        <div class="history-date">${fmtDate(r.timestamp)} ${sourceBadge}</div>
         <div class="history-reading">${String(r.raw).padStart(4, '0')}</div>
         <div class="history-kwh">× 10 = ${r.kwh.toLocaleString('pt-BR')} kWh${nextBadge}</div>
         ${consumHtml}

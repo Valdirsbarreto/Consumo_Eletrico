@@ -215,19 +215,20 @@
                 <div class="card-title" style="justify-content:space-between">
                     📋 Histórico de Leituras
                     <div style="display:flex; gap:8px;">
-                        <input type="file" id="fileImport" accept=".pdf, image/png, image/jpeg, image/jpg"
-                            style="display:none;" />
-                        <input type="file" id="cameraImport" accept="image/*" capture="environment"
-                            style="display:none;" />
-                        <button class="btn-secondary" id="btnImportFile"
-                            onclick="document.getElementById('fileImport').click()" style="padding:0.4rem 0.6rem;">📄
-                            Arquivo</button>
-                        <button class="btn-secondary" id="btnCameraImport"
-                            onclick="document.getElementById('cameraImport').click()" style="padding:0.4rem 0.6rem;">📷
-                            Foto</button>
+                        <input type="file" id="fileImport" accept=".pdf, image/png, image/jpeg, image/jpg" style="display:none;" />
+                        <input type="file" id="cameraImport" accept="image/*" capture="environment" style="display:none;" />
+                        <button class="btn-secondary" id="btnImportFile" onclick="document.getElementById('fileImport').click()" style="padding:0.4rem 0.6rem;">📄 Conta Light</button>
+                        <button class="btn-secondary" id="btnCameraImport" onclick="document.getElementById('cameraImport').click()" style="padding:0.4rem 0.6rem;">📷 Foto</button>
                         <button class="btn-insert-prev" id="btnInsertPrev">+ Manual</button>
                     </div>
                 </div>
+                <!-- Filtros de tipo -->
+                <div id="historyFilters" style="display:flex; gap:6px; margin-bottom:12px; flex-wrap:wrap;">
+                    <button id="filterAll" onclick="setHistoryFilter('all')" style="padding:4px 12px; border-radius:20px; border:1px solid rgba(0,212,255,0.4); background:rgba(0,212,255,0.15); color:var(--accent-blue); font-size:0.75rem; cursor:pointer;">Todas</button>
+                    <button id="filterConta" onclick="setHistoryFilter('conta')" style="padding:4px 12px; border-radius:20px; border:1px solid rgba(255,255,255,0.1); background:transparent; color:var(--text-muted); font-size:0.75rem; cursor:pointer;">📄 Contas Light</button>
+                    <button id="filterRelogio" onclick="setHistoryFilter('relogio')" style="padding:4px 12px; border-radius:20px; border:1px solid rgba(255,255,255,0.1); background:transparent; color:var(--text-muted); font-size:0.75rem; cursor:pointer;">🕐 Marcações do Relógio</button>
+                </div>
+
                 <div class="history-list" id="historyList">
                     <div class="empty-state">
                         <span class="empty-icon">💭</span>
